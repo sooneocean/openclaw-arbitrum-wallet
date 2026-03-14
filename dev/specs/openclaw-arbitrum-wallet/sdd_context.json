@@ -1,0 +1,296 @@
+{
+  "version": "3.0.0",
+  "feature": "openclaw-arbitrum-wallet",
+  "spec_mode": "full",
+  "work_type": "new_feature",
+  "status": "completed",
+  "current_stage": "S7",
+  "execution_mode": "autopilot",
+  "spec_folder": "dev/specs/openclaw-arbitrum-wallet",
+  "last_updated": "2026-03-14T14:00:00Z",
+  "last_updated_by": "claude",
+  "completed_at": "2026-03-14T14:00:00Z",
+  "stages": {
+    "s0": {
+      "status": "completed",
+      "output": {
+        "brief_spec_path": "dev/specs/openclaw-arbitrum-wallet/s0_brief_spec.md",
+        "work_type": "new_feature",
+        "requirement": "為 openclaw agent 框架開發可安裝的 NPM skill package，提供 Arbitrum 鏈上錢包管理功能",
+        "goal": "openclaw agent 可透過 npm install 安裝並使用 Arbitrum 錢包功能",
+        "pain_points": ["openclaw 缺乏 wallet skill", "agent 無法與 Arbitrum 鏈互動"],
+        "success_criteria": [
+          "npm install openclaw-arbitrum-wallet 可正常安裝",
+          "四個 tool 全部可被呼叫",
+          "package 發布至 npmjs"
+        ],
+        "scope_in": ["create_wallet", "get_balance", "send_transaction", "sign_message", "npm publish"],
+        "scope_out": ["私鑰持久化", "Arbitrum Nova", "ERC20 transfer", "wallet import"],
+        "constraints": ["不保存私鑰", "pure stateless", "npm package public"],
+        "functional_areas": [
+          {"id": "FA1", "name": "建立錢包", "independent": true},
+          {"id": "FA2", "name": "查詢餘額", "independent": true},
+          {"id": "FA3", "name": "發送交易", "independent": false},
+          {"id": "FA4", "name": "簽名訊息", "independent": true},
+          {"id": "FA5", "name": "NPM Package 架構", "independent": true}
+        ],
+        "decomposition_strategy": "single_sop_fa_labeled"
+      }
+    },
+    "s1": {
+      "status": "completed",
+      "agents": ["codebase-explorer", "architect"],
+      "started_at": "2026-03-14T00:00:00Z",
+      "completed_at": "2026-03-14T01:00:00Z",
+      "output": {
+        "completed_phases": [1, 2],
+        "dev_spec_path": "dev/specs/openclaw-arbitrum-wallet/s1_dev_spec.md",
+        "solution_summary": "Greenfield TypeScript NPM package (CommonJS) 使用 ethers v6，4 個 stateless tool handler 採用標準化 Result 物件回傳格式 { success, data?, error? }。無前端、無資料庫，純後端 Node.js package。",
+        "impact_scope": {
+          "frontend": [],
+          "backend": [
+            "src/index.ts",
+            "src/types.ts",
+            "src/tools/createWallet.ts",
+            "src/tools/getBalance.ts",
+            "src/tools/sendTransaction.ts",
+            "src/tools/signMessage.ts"
+          ],
+          "database": []
+        },
+        "tasks": [
+          {"id": 1, "name": "Package 架構設定", "fa": "FA5", "type": "基礎建設", "complexity": "S", "agent": "node-expert", "deps": []},
+          {"id": 2, "name": "型別定義", "fa": "FA5", "type": "後端", "complexity": "S", "agent": "node-expert", "deps": [1]},
+          {"id": 3, "name": "createWallet handler", "fa": "FA1", "type": "後端", "complexity": "S", "agent": "node-expert", "deps": [2]},
+          {"id": 4, "name": "getBalance handler", "fa": "FA2", "type": "後端", "complexity": "M", "agent": "node-expert", "deps": [2]},
+          {"id": 5, "name": "sendTransaction handler", "fa": "FA3", "type": "後端", "complexity": "M", "agent": "node-expert", "deps": [2]},
+          {"id": 6, "name": "signMessage handler", "fa": "FA4", "type": "後端", "complexity": "S", "agent": "node-expert", "deps": [2]},
+          {"id": 7, "name": "Skill manifest", "fa": "FA5", "type": "後端", "complexity": "S", "agent": "node-expert", "deps": [3, 4, 5, 6]},
+          {"id": 8, "name": "Jest 測試", "fa": "All", "type": "測試", "complexity": "M", "agent": "node-expert", "deps": [3, 4, 5, 6]},
+          {"id": 9, "name": "README.md", "fa": "FA5", "type": "文件", "complexity": "S", "agent": "node-expert", "deps": [7]},
+          {"id": 10, "name": "npm publish 流程", "fa": "FA5", "type": "基礎建設", "complexity": "S", "agent": "node-expert", "deps": [1]}
+        ],
+        "acceptance_criteria": [
+          "FA1: create_wallet 回傳有效 address (42 chars) + privateKey (66 chars) + mnemonic (12 words)",
+          "FA2: get_balance ETH 路徑回傳正確 balance/symbol/decimals/raw",
+          "FA2: get_balance ERC20 路徑回傳正確 token 資訊，decimals fallback 18",
+          "FA3: send_transaction 正常路徑回傳 txHash；amount<=0 回傳 ValidationError；私鑰錯誤回傳 InvalidKeyError",
+          "FA4: sign_message 回傳 EIP-191 signature + signer address",
+          "FA5: npm install 後 require() 取得含 4 tools 的 manifest",
+          "安全: handler 原始碼無 console.log 輸出私鑰",
+          "測試: npm test 全部通過，無真實 RPC 呼叫",
+          "發布: npm pack 產出的 tarball 不含 src/ 和 tests/"
+        ],
+        "assumptions": [
+          "openclaw skill manifest 格式為 export default { name, version, description, tools[] }",
+          "handler 簽名為 async (params) => Promise<{ success, data?, error? }>",
+          "parameters 使用 JSON Schema (RFC 7159) 格式",
+          "npm package name openclaw-arbitrum-wallet 可用"
+        ],
+        "tech_debt": [
+          "ERC20 balanceOf 使用 hardcode minimal ABI，未來需重構成完整 ABI 管理",
+          "RPC endpoint 以參數傳入但無 multi-RPC fallback 機制",
+          "缺乏 wallet import/restore 功能"
+        ],
+        "regression_risks": [],
+        "risks": [
+          {
+            "type": "安全風險",
+            "level": "High",
+            "description": "私鑰在 handler 函數記憶體中存在，若 agent runtime 有記憶體 dump 或 log 機制可能洩漏",
+            "mitigation": "handler 內禁止 console.log；私鑰僅在 handler scope 內使用；README 聲明安全責任歸屬"
+          },
+          {
+            "type": "外部依賴風險",
+            "level": "Medium",
+            "description": "Arbitrum 公開 RPC 無 SLA 保證",
+            "mitigation": "try/catch 包裝為 NetworkError；支援自訂 rpcUrl"
+          },
+          {
+            "type": "相容性風險",
+            "level": "Medium",
+            "description": "ethers v6 與 v5 有大量 breaking changes",
+            "mitigation": "dev_spec 明確列出 v6 API 對照表；型別定義使用 bigint"
+          }
+        ],
+        "dependencies": {
+          "upstream": ["ethers v6 (npm)", "Arbitrum One RPC"],
+          "downstream": ["openclaw agent runtime"]
+        }
+      }
+    },
+    "s2": {
+      "status": "completed",
+      "agents": ["general-purpose (R1)", "reviewer (R2)"],
+      "output": {
+        "review_report_path": "dev/specs/openclaw-arbitrum-wallet/s2_review_report.md",
+        "gate_result": "pass",
+        "findings_count": {"P0": 3, "P1": 5, "P2": 4},
+        "accepted": 10,
+        "partial_accepted": 1,
+        "rejected": 0,
+        "spec_modified": true
+      }
+    },
+    "s3": {
+      "status": "completed",
+      "agent": "architect",
+      "supporting_agents": ["architect"],
+      "completed_at": "2026-03-14T02:00:00Z",
+      "output": {
+        "implementation_plan_path": "dev/specs/openclaw-arbitrum-wallet/s3_implementation_plan.md",
+        "waves": 5,
+        "total_tasks": 10,
+        "estimated_waves": 5,
+        "verification": {
+          "static_analysis": ["npx tsc --noEmit"],
+          "unit_tests": ["npm test"],
+          "package_check": ["npm pack --dry-run"]
+        }
+      }
+    },
+    "s4": {
+      "status": "completed",
+      "completed_at": "2026-03-14T03:00:00Z",
+      "output": {
+        "build_status": "pass",
+        "tdd_summary": {
+          "red_commits": ["eae98d0"],
+          "green_commits": ["a7908bf", "7cc7261"],
+          "tests_total": 19,
+          "tests_passing": 19
+        },
+        "changes": [
+          "package.json", "tsconfig.json", "jest.config.js", ".gitignore", ".npmignore",
+          "src/types.ts", "src/index.ts",
+          "src/tools/createWallet.ts", "src/tools/getBalance.ts",
+          "src/tools/sendTransaction.ts", "src/tools/signMessage.ts",
+          "tests/createWallet.test.ts", "tests/getBalance.test.ts",
+          "tests/sendTransaction.test.ts", "tests/signMessage.test.ts",
+          "README.md"
+        ]
+      }
+    },
+    "s5": {
+      "status": "completed",
+      "output": {
+        "review_report_path": "dev/specs/openclaw-arbitrum-wallet/s5_code_review_report.md",
+        "conclusion": "pass",
+        "findings": {"P0": 1, "P1": 4, "P2": 2},
+        "all_fixed": true,
+        "tests_after_fix": 22,
+        "build_status": "pass"
+      }
+    },
+    "s6": {
+      "status": "completed",
+      "agent": "test-engineer",
+      "started_at": "2026-03-14T13:38:00Z",
+      "completed_at": "2026-03-14T13:41:10Z",
+      "output": {
+        "tdd_audit": {
+          "compliance_rate": 1.0,
+          "total_tasks": 10,
+          "tdd_completed": 6,
+          "tdd_skipped": 4,
+          "invalid_skips": 0,
+          "invalid_evidence": 0,
+          "verdict": "pass",
+          "notes": "T1/T2/T9/T10 為基礎建設與文件任務，無可測邏輯，合法 skip。T3~T8 均有 red commit eae98d0 + green commits a7908bf/7cc7261，pair 完整。"
+        },
+        "acceptance_criteria": {
+          "total": 9,
+          "met": 9,
+          "unmet": 0,
+          "details": [
+            {"ac_id": "AC-1", "description": "建立新錢包回傳合法 address/privateKey/mnemonic", "result": "pass", "evidence": "createWallet.ts: Wallet.createRandom(), mnemonic null guard, 22/22 tests pass"},
+            {"ac_id": "AC-2", "description": "查詢 ETH 餘額回傳 balance/symbol/decimals/raw", "result": "pass", "evidence": "getBalance.ts ETH path: formatEther, symbol=ETH, decimals=18, raw.toString()"},
+            {"ac_id": "AC-3", "description": "查詢 ERC20 餘額回傳 token balance/symbol/decimals", "result": "pass", "evidence": "getBalance.ts ERC20 path: Contract + Promise.all, decimals fallback=18, symbol fallback=UNKNOWN"},
+            {"ac_id": "AC-4", "description": "發送 ETH 回傳 txHash；amount<=0 ValidationError；私鑰錯誤 InvalidKeyError", "result": "pass", "evidence": "sendTransaction.ts: to 地址驗證, parseEther > 0n 驗證, classifyKeyError, fire-and-forget"},
+            {"ac_id": "AC-5", "description": "簽名訊息回傳 EIP-191 signature + signer address", "result": "pass", "evidence": "signMessage.ts: wallet.signMessage() (EIP-191), 回傳 signature + address"},
+            {"ac_id": "AC-6", "description": "RPC 失敗回傳 NetworkError", "result": "pass", "evidence": "getBalance.ts 外層 catch: NetworkError: ${msg}"},
+            {"ac_id": "AC-7", "description": "私鑰格式錯誤回傳 InvalidKeyError", "result": "pass", "evidence": "sendTransaction.ts + signMessage.ts: classifyKeyError 函數分類"},
+            {"ac_id": "AC-8", "description": "金額不合法回傳 ValidationError", "result": "pass", "evidence": "sendTransaction.ts: parsedAmount <= 0n 驗證"},
+            {"ac_id": "AC-9", "description": "npm install 後 require().default 取得含 4 tools 的 manifest", "result": "pass", "evidence": "node -e command 輸出 4，tools: [create_wallet, get_balance, send_transaction, sign_message]"}
+          ]
+        },
+        "automated_tests": {
+          "total": 22,
+          "passed": 22,
+          "failed": 0
+        },
+        "e2e_tests": [
+          {"scenario": "npm pack --dry-run 驗證 tarball 不含 src/tests/", "result": "pass"},
+          {"scenario": "node manifest 載入驗證 tools.length=4", "result": "pass"}
+        ],
+        "integration_tests": {
+          "triggered": false,
+          "trigger_reason": "純 NPM package，無 DB/API server，無跨模組資料流，整合測試不適用",
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0
+        },
+        "acceptance_criteria_met": true,
+        "defects": {
+          "total": 0,
+          "fixed": 0,
+          "pending": 0
+        },
+        "repair_loop_count": 0,
+        "recommendation": "proceed_to_s7",
+        "verification_evidence": [
+          {
+            "test_type": "unit",
+            "command": "npm test",
+            "exit_code": 0,
+            "output_summary": "4 test suites, 22 tests, 0 failures. PASS createWallet/signMessage/sendTransaction/getBalance",
+            "timestamp": "2026-03-14T13:38:22Z"
+          },
+          {
+            "test_type": "unit",
+            "command": "npx tsc --noEmit",
+            "exit_code": 0,
+            "output_summary": "Zero type errors, strict mode enabled",
+            "timestamp": "2026-03-14T13:39:01Z"
+          },
+          {
+            "test_type": "unit",
+            "command": "npm run build",
+            "exit_code": 0,
+            "output_summary": "tsc compiled successfully, dist/ generated with 20 files",
+            "timestamp": "2026-03-14T13:39:15Z"
+          },
+          {
+            "test_type": "e2e",
+            "command": "npm pack --dry-run",
+            "exit_code": 0,
+            "output_summary": "20 files, 7.9kB packed, no src/ or tests/ in tarball",
+            "timestamp": "2026-03-14T13:39:45Z"
+          },
+          {
+            "test_type": "e2e",
+            "command": "node -e \"const s=require('./dist'); console.log(s.default.tools.length)\"",
+            "exit_code": 0,
+            "output_summary": "Output: 4 — manifest loads with 4 tools via require().default",
+            "timestamp": "2026-03-14T13:40:12Z"
+          },
+          {
+            "test_type": "unit",
+            "command": "npm test -- --coverage",
+            "exit_code": 0,
+            "output_summary": "22/22 pass. Tool handlers: stmts 88-100%, funcs 100%, lines 88-100%",
+            "timestamp": "2026-03-14T13:41:10Z"
+          }
+        ]
+      }
+    },
+    "s7": {
+      "status": "in_progress",
+      "agent": "git-operator",
+      "started_at": "2026-03-14T14:00:00Z",
+      "output": null,
+      "lessons_learned": null
+    }
+  }
+}
