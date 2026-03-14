@@ -6,6 +6,19 @@ import {
   DEFAULT_RPC_URL,
 } from "../types";
 
+function classifyKeyError(err: unknown): boolean {
+  const code = (err as { code?: string }).code;
+  const msg = err instanceof Error ? err.message : String(err);
+  const msgLower = msg.toLowerCase();
+  return (
+    code === "INVALID_ARGUMENT" ||
+    msgLower.includes("invalid private key") ||
+    msgLower.includes("invalid argument") ||
+    msgLower.includes("valid bigint") ||
+    msgLower.includes("curve.n")
+  );
+}
+
 export async function sendTransactionHandler(
   params: SendTransactionParams
 ): Promise<HandlerResult<SendTransactionData>> {
@@ -34,10 +47,21 @@ export async function sendTransactionHandler(
     };
   }
 
+  // Separate Wallet construction from sendTransaction so that key errors
+  // are always classified as InvalidKeyError, not TransactionError.
+  let wallet: Wallet;
   try {
     const provider = new JsonRpcProvider(params.rpcUrl ?? DEFAULT_RPC_URL);
-    const wallet = new Wallet(params.privateKey, provider);
+    wallet = new Wallet(params.privateKey, provider);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (classifyKeyError(err)) {
+      return { success: false, error: `InvalidKeyError: ${msg}` };
+    }
+    return { success: false, error: `TransactionError: ${msg}` };
+  }
 
+  try {
     const tx = await wallet.sendTransaction({
       to: params.to,
       value: parsedAmount,
@@ -64,11 +88,7 @@ export async function sendTransactionHandler(
     ) {
       return { success: false, error: `InsufficientFundsError: ${msg}` };
     }
-    if (
-      code === "INVALID_ARGUMENT" ||
-      msg.toLowerCase().includes("invalid private key") ||
-      msg.toLowerCase().includes("invalid argument")
-    ) {
+    if (classifyKeyError(err)) {
       return { success: false, error: `InvalidKeyError: ${msg}` };
     }
     if (

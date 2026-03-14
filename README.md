@@ -183,6 +183,52 @@ Providers: [Alchemy](https://alchemy.com), [Infura](https://infura.io), [QuickNo
 
 ---
 
+## Publishing
+
+This package is published to npm under the `openclaw-arbitrum-wallet` name. If you are contributing and need to publish a new version, follow these steps:
+
+### Manual publish
+
+1. **Authenticate with npm:**
+
+   ```bash
+   npm login
+   ```
+
+   This opens a browser login flow. After completing it, your credentials are stored locally.
+
+   For CI/CD or non-interactive environments, set the `NPM_TOKEN` environment variable in your shell or GitHub Secrets instead:
+
+   ```bash
+   export NPM_TOKEN=your_npm_token_here
+   ```
+
+   Then create or update `~/.npmrc`:
+
+   ```
+   //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+   ```
+
+2. **Run tests manually (optional — prepublishOnly enforces this):**
+
+   ```bash
+   npm test
+   ```
+
+3. **Publish:**
+
+   ```bash
+   npm publish
+   ```
+
+   The `prepublishOnly` script will automatically run `npm run build && npm test` before publishing. The publish will abort if either step fails.
+
+### CI/CD (GitHub Actions)
+
+If you want to automate publishing on release, add a `.github/workflows/publish.yml` workflow and store your npm token as a GitHub Secret named `NPM_TOKEN`. The workflow can then run `npm publish` with the token injected via the `NODE_AUTH_TOKEN` environment variable.
+
+---
+
 ## License
 
 MIT

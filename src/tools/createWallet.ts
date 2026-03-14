@@ -9,8 +9,7 @@ export async function createWalletHandler(
     if (!wallet.mnemonic) {
       return {
         success: false,
-        error:
-          "UnexpectedError: mnemonic is null — wallet.createRandom() produced a wallet without a mnemonic phrase",
+        error: "UnexpectedError: mnemonic is null after createRandom",
       };
     }
     return {

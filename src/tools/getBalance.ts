@@ -23,6 +23,15 @@ export async function getBalanceHandler(
     };
   }
 
+  // Validate tokenAddress format before attempting any contract interaction.
+  // An invalid format should be a ValidationError, not an InvalidContractError.
+  if (params.tokenAddress && !isAddress(params.tokenAddress)) {
+    return {
+      success: false,
+      error: `ValidationError: Invalid token address "${params.tokenAddress}"`,
+    };
+  }
+
   try {
     const provider = new JsonRpcProvider(params.rpcUrl ?? DEFAULT_RPC_URL);
 

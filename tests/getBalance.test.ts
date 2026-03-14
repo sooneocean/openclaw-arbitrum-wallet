@@ -90,7 +90,8 @@ describe("getBalanceHandler", () => {
     mockSymbol.mockResolvedValue("BAD");
     const result = await getBalanceHandler({
       address: "0x1234567890123456789012345678901234567890",
-      tokenAddress: "0x0000000000000000000000000000000000000001",
+      // CR-007: use a neutral dummy address, not an EVM precompile address
+      tokenAddress: "0x0000000000000000000000000000000000000Bad",
     });
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/InvalidContractError/);
@@ -98,6 +99,16 @@ describe("getBalanceHandler", () => {
 
   it("returns ValidationError for invalid address", async () => {
     const result = await getBalanceHandler({ address: "not-an-address" });
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/ValidationError/);
+  });
+
+  it("returns ValidationError for invalid tokenAddress format", async () => {
+    // CR-002: tokenAddress format should produce ValidationError, not InvalidContractError
+    const result = await getBalanceHandler({
+      address: "0x1234567890123456789012345678901234567890",
+      tokenAddress: "not-an-address",
+    });
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/ValidationError/);
   });
