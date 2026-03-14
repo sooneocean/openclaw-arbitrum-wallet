@@ -1,0 +1,14 @@
+src/
+tests/
+tsconfig.json
+jest.config.js
+.gitignore
+node_modules/
+dev/
+.agents/
+.claude/
+.codex/
+AGENTS.md
+CLAUDE.md
+.mcp.json
+instincts/
