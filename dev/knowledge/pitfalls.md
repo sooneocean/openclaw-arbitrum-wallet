@@ -14,3 +14,14 @@
 - **mock private key 長度計算錯誤**（openclaw-arbitrum-wallet, 2026-03）
   - 症狀：測試中 mock private key 寫成 66 hex chars（`0x` + 64 chars），實際上 ethers v6 要求的裸 hex 是 64 chars（不含 `0x` prefix 則共 66 字元，含 prefix 則共 66 字元）。誤解「66 chars」指 hex digits 而非含 prefix 的完整字串，導致 RED → 第一次 GREEN 時有一個 test 失敗。
   - 解法：明確記錄：ethers v6 private key 格式為 `0x` + 64 hex digits = 66 字元總長。測試 mock 需包含 `0x` prefix。
+
+## tag: esm-dual-format
+
+- **ESM 相對 import 必須加 .js 副檔名**（architecture-refactor, 2026-03）
+  - 症狀：tsc 編譯 ESM 後 `import { foo } from "./bar"` 在 Node.js ESM 解析失敗（`ERR_MODULE_NOT_FOUND`），CJS 端正常。
+  - 根因：Node.js ESM 嚴格要求 import specifier 包含完整副檔名，不會自動補 `.js`。
+  - 解法：所有 TypeScript source 的相對 import 加 `.js`（如 `from "./types.js"`），tsc 仍可正確解析到 `.ts`。ts-jest 不認 `.js` 結尾，需在 jest.config.js 加 `moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }`。
+
+- **ESM 雙格式不要用 .mjs rename**（architecture-refactor, 2026-03）
+  - 症狀：tsc 編譯出的 import specifier 保持 `.js`，rename 成 `.mjs` 後路徑不匹配，ESM import 全部失敗。
+  - 解法：改用 `dist/esm/package.json` + `{"type": "module"}` 方案。該目錄下的 `.js` 檔案會被 Node.js 視為 ESM，無需 rename。

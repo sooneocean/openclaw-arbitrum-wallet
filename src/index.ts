@@ -1,13 +1,13 @@
-import { createWalletHandler } from "./tools/createWallet";
-import { getBalanceHandler } from "./tools/getBalance";
-import { sendTransactionHandler } from "./tools/sendTransaction";
-import { signMessageHandler } from "./tools/signMessage";
+import { createWalletHandler } from "./tools/createWallet.js";
+import { getBalanceHandler } from "./tools/getBalance.js";
+import { sendTransactionHandler } from "./tools/sendTransaction.js";
+import { signMessageHandler } from "./tools/signMessage.js";
 
 // Re-export individual handlers for direct import/testing
-export { createWalletHandler } from "./tools/createWallet";
-export { getBalanceHandler } from "./tools/getBalance";
-export { sendTransactionHandler } from "./tools/sendTransaction";
-export { signMessageHandler } from "./tools/signMessage";
+export { createWalletHandler } from "./tools/createWallet.js";
+export { getBalanceHandler } from "./tools/getBalance.js";
+export { sendTransactionHandler } from "./tools/sendTransaction.js";
+export { signMessageHandler } from "./tools/signMessage.js";
 
 /**
  * openclaw skill manifest.
@@ -21,7 +21,7 @@ export { signMessageHandler } from "./tools/signMessage";
  */
 const manifest = {
   name: "arbitrum-wallet",
-  version: "1.0.0",
+  version: "1.1.0",
   description: "Arbitrum wallet management tools for openclaw agents",
   tools: [
     {

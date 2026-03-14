@@ -1,5 +1,4 @@
 import {
-  JsonRpcProvider,
   Contract,
   formatEther,
   formatUnits,
@@ -9,9 +8,9 @@ import {
   GetBalanceParams,
   GetBalanceData,
   HandlerResult,
-  DEFAULT_RPC_URL,
   ERC20_ABI,
-} from "../types";
+} from "../types.js";
+import { getProvider, withRetry } from "../provider.js";
 
 export async function getBalanceHandler(
   params: GetBalanceParams
@@ -33,11 +32,11 @@ export async function getBalanceHandler(
   }
 
   try {
-    const provider = new JsonRpcProvider(params.rpcUrl ?? DEFAULT_RPC_URL);
+    const provider = getProvider(params.rpcUrl);
 
     if (!params.tokenAddress) {
       // ETH path
-      const raw = await provider.getBalance(params.address);
+      const raw = await withRetry(() => provider.getBalance(params.address));
       return {
         success: true,
         data: {
@@ -55,7 +54,7 @@ export async function getBalanceHandler(
 
     let rawBalance: bigint;
     try {
-      rawBalance = await contract.balanceOf(params.address);
+      rawBalance = await withRetry(() => contract.balanceOf(params.address));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return {
@@ -65,8 +64,8 @@ export async function getBalanceHandler(
     }
 
     const [decimalsRaw, symbol] = await Promise.all([
-      contract.decimals().catch(() => BigInt(18)),
-      contract.symbol().catch(() => "UNKNOWN"),
+      withRetry(() => contract.decimals()).catch(() => BigInt(18)),
+      withRetry(() => contract.symbol()).catch(() => "UNKNOWN"),
     ]);
 
     const decimals = Number(decimalsRaw);

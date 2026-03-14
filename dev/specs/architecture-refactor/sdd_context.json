@@ -1,0 +1,282 @@
+{
+  "version": "3.0.0",
+  "feature": "architecture-refactor",
+  "spec_mode": "full",
+  "work_type": "refactor",
+  "status": "completed",
+  "current_stage": "S7",
+  "completed_at": "2026-03-15T17:30:00Z",
+  "execution_mode": "autopilot",
+  "spec_folder": "dev/specs/architecture-refactor",
+  "last_updated": "2026-03-15T17:00:00Z",
+  "last_updated_by": "claude",
+  "stages": {
+    "s0": {
+      "status": "completed",
+      "agent": "requirement-analyst",
+      "started_at": "2026-03-15T00:00:00Z",
+      "completed_at": "2026-03-15T00:00:00Z",
+      "output": {
+        "brief_spec_path": "dev/specs/architecture-refactor/s0_brief_spec.md",
+        "work_type": "refactor",
+        "requirement": "重構內部架構：消除重複程式碼、集中錯誤分類、引入 Provider 管理層（含 retry/fallback）、新增 ESM 雙格式輸出",
+        "pain_points": [
+          "classifyKeyError 重複定義在兩個檔案",
+          "錯誤分類邏輯散落 4 個 handler",
+          "Provider 每次呼叫重建無重用",
+          "無 retry/fallback 機制",
+          "只支援 CJS 無 ESM"
+        ],
+        "goal": "零行為變更的前提下，改善程式碼品質、網路穩定性、與模組格式相容性",
+        "success_criteria": [
+          "classifyKeyError 只存在 src/errors.ts",
+          "既有 22 個測試 100% 通過",
+          "Provider 快取重用驗證",
+          "retry 機制驗證",
+          "CJS + ESM 雙格式載入驗證"
+        ],
+        "scope_in": [
+          "新增 src/errors.ts",
+          "新增 src/provider.ts",
+          "重構 4 個 handler catch 區塊",
+          "ESM 雙格式 tsconfig + exports"
+        ],
+        "scope_out": [
+          "新增 tool handler",
+          "修改 handler 介面",
+          "多鏈支援",
+          "多 URL 負載均衡",
+          "major version bump"
+        ],
+        "constraints": [
+          "零行為變更",
+          "backward compatible",
+          "Provider 快取無 TTL/LRU",
+          "retry 僅網路層"
+        ],
+        "functional_areas": [
+          {"id": "FA-A", "name": "錯誤分類集中化", "description": "抽取並集中錯誤分類邏輯至 src/errors.ts", "independence": "medium"},
+          {"id": "FA-B", "name": "Provider 管理層", "description": "Provider 快取 + retry/fallback", "independence": "medium"},
+          {"id": "FA-C", "name": "ESM 雙格式輸出", "description": "CJS + ESM conditional exports", "independence": "high"}
+        ],
+        "decomposition_strategy": "single_sop_fa_labeled",
+        "child_sops": []
+      }
+    },
+    "s1": {
+      "status": "completed",
+      "agents": ["codebase-explorer", "architect"],
+      "started_at": "2026-03-15T09:00:00Z",
+      "completed_at": "2026-03-15T10:00:00Z",
+      "output": {
+        "completed_phases": [1, 2],
+        "dev_spec_path": "dev/specs/architecture-refactor/s1_dev_spec.md",
+        "impact_scope": {
+          "new_files": ["src/errors.ts", "src/provider.ts", "tsconfig.cjs.json", "tsconfig.esm.json"],
+          "modified_files": ["src/tools/sendTransaction.ts", "src/tools/signMessage.ts", "src/tools/getBalance.ts", "package.json", "tsconfig.json"],
+          "unchanged_files": ["src/tools/createWallet.ts", "src/types.ts"]
+        },
+        "tasks": [
+          "T1:create-errors-ts",
+          "T2:refactor-handlers-errors",
+          "T3:create-provider-ts",
+          "T4:refactor-handlers-provider",
+          "T5:dual-tsconfig-esm",
+          "T6:integration-verify"
+        ],
+        "acceptance_criteria": [
+          "AC-1:single-source-classifyKeyError",
+          "AC-2:22-tests-pass",
+          "AC-3:5-conditions-preserved",
+          "AC-4:provider-cache",
+          "AC-5:retry-network",
+          "AC-6:no-retry-business",
+          "AC-7:no-retry-sendTx",
+          "AC-8:cjs-require",
+          "AC-9:esm-import",
+          "AC-10:version-1.1.0"
+        ],
+        "assumptions": [
+          "ethers v6 JsonRpcProvider 同步惰性建構，快取安全",
+          "jest.mock('ethers') 模組級攔截不受內部 import 路徑變更影響",
+          "Node.js 單執行緒，Map 同步存取無 race condition"
+        ],
+        "solution_summary": "新增 errors.ts（集中 classifyKeyError）+ provider.ts（Provider 快取 + withRetry）+ 雙 tsconfig（CJS+ESM），零行為變更",
+        "tech_debt": [],
+        "regression_risks": [
+          "classifyKeyError 五條件遺漏",
+          "Provider cache 測試殘留",
+          "exports 條件順序",
+          "sendTransaction retry 重複廣播"
+        ]
+      }
+    },
+    "s2": {
+      "status": "completed",
+      "agents": ["codebase-explorer", "general-purpose (R1)", "reviewer (R2)"],
+      "started_at": "2026-03-15T11:00:00Z",
+      "completed_at": "2026-03-15T12:00:00Z",
+      "output": {
+        "review_report_path": "dev/specs/architecture-refactor/s2_review_report.md",
+        "gate_result": "pass",
+        "findings_count": {"P0": 1, "P1": 6, "P2": 5},
+        "accepted": 8,
+        "partial_accepted": 3,
+        "rejected": 2,
+        "spec_modified": true,
+        "key_changes": [
+          "ESM 策略從 .mjs rename 改為 dist/esm/package.json + type:module",
+          "新增測試從建議改為必須",
+          "build script 加 rm -rf dist",
+          "errors.ts 範圍 descope 記錄",
+          "零行為變更精確定義",
+          "manifest.version 同步"
+        ]
+      }
+    },
+    "s3": {
+      "status": "completed",
+      "agent": "architect",
+      "started_at": "2026-03-15T12:30:00Z",
+      "completed_at": "2026-03-15T13:00:00Z",
+      "output": {
+        "implementation_plan_path": "dev/specs/architecture-refactor/s3_implementation_plan.md",
+        "waves": [
+          {
+            "wave": 1,
+            "name": "基礎模組建立（可並行）",
+            "tasks": [
+              {"id": "T1", "name": "建立 src/errors.ts", "agent": "ts-expert", "complexity": "S", "fa": "FA-A", "tdd": true},
+              {"id": "T3", "name": "建立 src/provider.ts", "agent": "ts-expert", "complexity": "M", "fa": "FA-B", "tdd": true},
+              {"id": "T5", "name": "雙 tsconfig + package.json + ESM", "agent": "ts-expert", "complexity": "M", "fa": "FA-C", "tdd": false}
+            ],
+            "parallel": true
+          },
+          {
+            "wave": 2,
+            "name": "錯誤分類重構",
+            "tasks": [
+              {"id": "T2", "name": "重構 handlers 使用 errors.ts", "agent": "ts-expert", "complexity": "S", "fa": "FA-A", "tdd": false}
+            ],
+            "parallel": false
+          },
+          {
+            "wave": 3,
+            "name": "Provider 重構",
+            "tasks": [
+              {"id": "T4", "name": "重構 handlers 使用 provider.ts", "agent": "ts-expert", "complexity": "S", "fa": "FA-B", "tdd": false}
+            ],
+            "parallel": false
+          },
+          {
+            "wave": 4,
+            "name": "整合驗證",
+            "tasks": [
+              {"id": "T6", "name": "整合驗證", "agent": "ts-expert", "complexity": "S", "fa": "全域", "tdd": false}
+            ],
+            "parallel": false
+          }
+        ],
+        "total_tasks": 6,
+        "estimated_waves": 4,
+        "verification": {
+          "unit_tests": ["npm test", "npx jest tests/errors.test.ts", "npx jest tests/provider.test.ts"],
+          "build": ["npm run build"],
+          "integration": ["CJS require 驗證", "ESM import 驗證"],
+          "code_quality": ["grep classifyKeyError 單一來源", "grep 無 new JsonRpcProvider", "grep 無 console.log"]
+        }
+      }
+    },
+    "s4": {
+      "status": "completed",
+      "started_at": "2026-03-15T14:00:00Z",
+      "completed_at": "2026-03-15T15:00:00Z",
+      "output": {
+        "build_status": "pass",
+        "tdd_summary": {
+          "tests_total": 38,
+          "tests_passing": 38,
+          "new_tests": 16,
+          "existing_tests": 22
+        },
+        "completed_tasks": ["T1", "T2", "T3", "T4", "T5", "T6"],
+        "changes": [
+          "src/errors.ts",
+          "src/provider.ts",
+          "src/index.ts",
+          "src/tools/sendTransaction.ts",
+          "src/tools/signMessage.ts",
+          "src/tools/getBalance.ts",
+          "src/tools/createWallet.ts",
+          "tests/errors.test.ts",
+          "tests/provider.test.ts",
+          "tsconfig.cjs.json",
+          "tsconfig.esm.json",
+          "package.json",
+          "jest.config.js"
+        ],
+        "notes": "ESM 需要 .js 副檔名在 import 路徑中，所有 src/ 的相對 import 已加上 .js。jest.config.js 加了 moduleNameMapper 以相容 ts-jest。"
+      }
+    },
+    "s5": {
+      "status": "completed",
+      "agents": ["general-purpose (R1)"],
+      "started_at": "2026-03-15T15:30:00Z",
+      "completed_at": "2026-03-15T16:00:00Z",
+      "output": {
+        "review_report_path": "dev/specs/architecture-refactor/s5_code_review_report.md",
+        "conclusion": "pass",
+        "findings": {"P0": 0, "P1": 0, "P2": 3},
+        "all_fixed": true,
+        "spec_verification": {
+          "s0_criteria": {"total": 5, "passed": 5},
+          "ac_criteria": {"total": 10, "passed": 10},
+          "scope_notes": "3 個額外修改（.js extension + moduleNameMapper）屬 ESM 必要變更"
+        }
+      }
+    },
+    "s6": {
+      "status": "completed",
+      "agent": "test-engineer",
+      "started_at": "2026-03-15T16:30:00Z",
+      "completed_at": "2026-03-15T17:00:00Z",
+      "output": {
+        "automated_tests": {"total": 38, "passed": 38, "failed": 0},
+        "e2e_tests": [
+          {"scenario": "CJS require 載入 manifest", "result": "pass"},
+          {"scenario": "ESM import 載入 manifest", "result": "pass"}
+        ],
+        "acceptance_criteria_met": true,
+        "defects": {"total": 0, "fixed": 0, "pending": 0},
+        "repair_loop_count": 0,
+        "recommendation": "proceed_to_s7",
+        "verification_evidence": [
+          {"test_type": "unit", "command": "npm test", "exit_code": 0, "output_summary": "6 suites, 38 tests, 0 failures", "timestamp": "2026-03-15T17:00:00Z"},
+          {"test_type": "build", "command": "npm run build", "exit_code": 0, "output_summary": "dist/cjs + dist/esm generated", "timestamp": "2026-03-15T17:00:00Z"},
+          {"test_type": "e2e", "command": "node require + import", "exit_code": 0, "output_summary": "CJS: arbitrum-wallet 1.1.0 4 tools / ESM: same", "timestamp": "2026-03-15T17:00:00Z"}
+        ]
+      }
+    },
+    "s7": {
+      "status": "completed",
+      "agent": "git-operator",
+      "started_at": "2026-03-15T17:00:00Z",
+      "completed_at": "2026-03-15T17:30:00Z",
+      "lessons_learned": {
+        "what_went_well": [
+          "S2 的 SR-009 在寫碼前就攔截了 ESM .mjs rename 策略的致命問題，避免了 S4 返工",
+          "TDD 流程（T1, T3）讓新增模組有完整測試覆蓋，16 個新測試守護 errors.ts 和 provider.ts",
+          "classifyKeyError 逐字搬移策略確保五條件完全不變，零行為變更目標達成"
+        ],
+        "what_went_wrong": [
+          "ESM .js 副檔名需求在 S1/S2 分析中未被識別，S4 實作時才發現 Node.js ESM 需要明確副檔名，導致所有 src/ 檔案額外修改 + jest.config.js 加 moduleNameMapper",
+          "S1 影響範圍低估了 createWallet.ts 和 index.ts 的修改需求（.js extension）"
+        ],
+        "new_pitfalls": [
+          "Node.js ESM + tsc 雙格式：相對 import 必須加 .js 副檔名（例如 from './types.js'），否則 ESM 解析失敗。CJS 端可容忍但 ESM 端嚴格要求。ts-jest 不認 .js 結尾的 TS import，需在 jest.config.js 加 moduleNameMapper: { '^(\\\\.\\\\.{1,2}/.*)\\\\.js$': '$1' }",
+          "ESM 雙格式輸出：不要用 .mjs rename 策略（tsc emit 的 import specifier 不會跟著改），改用 dist/esm/package.json + {\"type\":\"module\"} 方案"
+        ]
+      }
+    }
+  }
+}

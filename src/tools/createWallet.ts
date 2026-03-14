@@ -1,5 +1,5 @@
 import { Wallet } from "ethers";
-import { CreateWalletParams, CreateWalletData, HandlerResult } from "../types";
+import { CreateWalletParams, CreateWalletData, HandlerResult } from "../types.js";
 
 export async function createWalletHandler(
   _params: CreateWalletParams

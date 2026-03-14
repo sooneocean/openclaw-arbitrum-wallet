@@ -1,23 +1,11 @@
-import { Wallet, JsonRpcProvider, parseEther, isAddress } from "ethers";
+import { Wallet, parseEther, isAddress } from "ethers";
 import {
   SendTransactionParams,
   SendTransactionData,
   HandlerResult,
-  DEFAULT_RPC_URL,
-} from "../types";
-
-function classifyKeyError(err: unknown): boolean {
-  const code = (err as { code?: string }).code;
-  const msg = err instanceof Error ? err.message : String(err);
-  const msgLower = msg.toLowerCase();
-  return (
-    code === "INVALID_ARGUMENT" ||
-    msgLower.includes("invalid private key") ||
-    msgLower.includes("invalid argument") ||
-    msgLower.includes("valid bigint") ||
-    msgLower.includes("curve.n")
-  );
-}
+} from "../types.js";
+import { classifyKeyError } from "../errors.js";
+import { getProvider } from "../provider.js";
 
 export async function sendTransactionHandler(
   params: SendTransactionParams
@@ -51,7 +39,7 @@ export async function sendTransactionHandler(
   // are always classified as InvalidKeyError, not TransactionError.
   let wallet: Wallet;
   try {
-    const provider = new JsonRpcProvider(params.rpcUrl ?? DEFAULT_RPC_URL);
+    const provider = getProvider(params.rpcUrl);
     wallet = new Wallet(params.privateKey, provider);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -1,18 +1,6 @@
 import { Wallet } from "ethers";
-import { SignMessageParams, SignMessageData, HandlerResult } from "../types";
-
-function classifyKeyError(err: unknown): boolean {
-  const code = (err as { code?: string }).code;
-  const msg = err instanceof Error ? err.message : String(err);
-  const msgLower = msg.toLowerCase();
-  return (
-    code === "INVALID_ARGUMENT" ||
-    msgLower.includes("invalid private key") ||
-    msgLower.includes("invalid argument") ||
-    msgLower.includes("valid bigint") ||
-    msgLower.includes("curve.n")
-  );
-}
+import { SignMessageParams, SignMessageData, HandlerResult } from "../types.js";
+import { classifyKeyError } from "../errors.js";
 
 export async function signMessageHandler(
   params: SignMessageParams
