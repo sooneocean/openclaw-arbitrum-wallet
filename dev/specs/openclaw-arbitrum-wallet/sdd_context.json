@@ -7,9 +7,9 @@
   "current_stage": "S7",
   "execution_mode": "autopilot",
   "spec_folder": "dev/specs/openclaw-arbitrum-wallet",
-  "last_updated": "2026-03-14T14:00:00Z",
+  "last_updated": "2026-03-14T14:05:00Z",
   "last_updated_by": "claude",
-  "completed_at": "2026-03-14T14:00:00Z",
+  "completed_at": "2026-03-14T14:05:00Z",
   "stages": {
     "s0": {
       "status": "completed",
@@ -286,11 +286,52 @@
       }
     },
     "s7": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "git-operator",
       "started_at": "2026-03-14T14:00:00Z",
-      "output": null,
-      "lessons_learned": null
+      "completed_at": "2026-03-14T14:05:00Z",
+      "output": {
+        "commit_hash": "0fe45fe2759ebc359f73e4fe50ef60deefac6804",
+        "branch": "main",
+        "changes": [
+          ".gitignore",
+          "dev/knowledge/pitfalls.md",
+          "dev/specs/openclaw-arbitrum-wallet/sdd_context.json",
+          "dev/specs/openclaw-arbitrum-wallet/s0_brief_spec.md",
+          "dev/specs/openclaw-arbitrum-wallet/s1_dev_spec.md",
+          "dev/specs/openclaw-arbitrum-wallet/s2_review_report.md",
+          "dev/specs/openclaw-arbitrum-wallet/s3_implementation_plan.md",
+          "dev/specs/openclaw-arbitrum-wallet/s5_code_review_report.md",
+          "dev/specs/openclaw-arbitrum-wallet/s6_test_evidence.md",
+          "dev/specs/openclaw-arbitrum-wallet/review/pre_review.md",
+          "dev/specs/openclaw-arbitrum-wallet/review/r1_findings.md",
+          "dev/specs/openclaw-arbitrum-wallet/review/r2_response.md",
+          "dev/specs/openclaw-arbitrum-wallet/review/s5_r1_findings.md",
+          "dev/specs/openclaw-arbitrum-wallet/review/s5_r2_response.md",
+          "package-lock.json"
+        ],
+        "stats": {
+          "files_changed": 15,
+          "insertions": 7510,
+          "deletions": 0
+        }
+      },
+      "lessons_learned": {
+        "what_went_well": [
+          "TDD 流程（RED→GREEN）讓 S5 review 發現的 7 個 bug 都有對應測試覆蓋",
+          "S2 Spec Review 在寫碼前就攔截了 12 個問題（Promise.all fallback 語意、CJS interop 等）",
+          "ethers v6 API 對照表在 dev_spec 中明確記載，避免了開發時的 v5/v6 混淆"
+        ],
+        "what_went_wrong": [
+          "S5 R1 發現 InvalidKeyError 的 catch 邏輯有漏洞（全零私鑰錯誤 message 不匹配），這在 S1/S2 的技術分析中未被識別",
+          "createWallet.ts 的 mock private key 長度寫錯（66 而非 64 hex chars），導致 RED 後第一次 GREEN 有一個 test 失敗需要修正"
+        ],
+        "new_pitfalls": [
+          "ethers v6 無效私鑰（如全零）的錯誤 message 是 'Expected valid bigint: 0 < bigint < curve.n'，不含 'INVALID_ARGUMENT' code 或 'invalid private key' 字串，error classification 需要額外 guard",
+          "mock private key 長度：ethers v6 要求 0x + 64 hex digits = 66 字元總長，測試 mock 需包含 0x prefix，混淆 hex digits 數量與字串總長會導致 test 失敗"
+        ],
+        "captured_at": "2026-03-14T14:05:00Z"
+      }
     }
   }
 }
