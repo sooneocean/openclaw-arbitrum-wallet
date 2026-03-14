@@ -8,7 +8,7 @@ jest.mock("ethers", () => {
       createRandom: jest.fn(() => ({
         address: "0x1234567890123456789012345678901234567890",
         privateKey:
-          "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab",
+          "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
         mnemonic: { phrase: "word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12" },
       })),
     },
@@ -29,7 +29,7 @@ describe("createWalletHandler", () => {
     (Wallet.createRandom as jest.Mock).mockReturnValueOnce({
       address: "0x1234567890123456789012345678901234567890",
       privateKey:
-        "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab",
+        "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
       mnemonic: null,
     });
     const result = await createWalletHandler({});
