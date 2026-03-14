@@ -1,0 +1,188 @@
+# openclaw-arbitrum-wallet
+
+Arbitrum wallet management skill for [openclaw](https://github.com/sooneocean/openclaw-arbitrum-wallet) agents.
+
+Provides four tools: create wallets, query balances, send ETH, and sign messages — all on Arbitrum One.
+
+## Install
+
+```bash
+npm install openclaw-arbitrum-wallet
+```
+
+## Usage
+
+```typescript
+const skill = require("openclaw-arbitrum-wallet").default;
+
+// Register with openclaw agent runtime
+agent.registerSkill(skill);
+```
+
+Each tool handler returns `{ success, data?, error? }` — never throws.
+
+---
+
+## Tools
+
+### `create_wallet`
+
+Create a new Arbitrum wallet (address + private key + mnemonic).
+
+```typescript
+const result = await skill.tools[0].handler({});
+if (result.success) {
+  const { address, privateKey, mnemonic } = result.data;
+  // ⚠️ Store privateKey securely — it will NOT be stored by this skill
+}
+```
+
+**Returns:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `address` | `string` | 0x-prefixed 42-char Ethereum address |
+| `privateKey` | `string` | 0x-prefixed 66-char hex private key |
+| `mnemonic` | `string` | 12-word BIP39 mnemonic phrase |
+
+---
+
+### `get_balance`
+
+Query ETH or ERC20 token balance for an address.
+
+```typescript
+// ETH balance
+const eth = await skill.tools[1].handler({
+  address: "0xYourAddress",
+});
+
+// ERC20 balance (e.g. USDC on Arbitrum)
+const usdc = await skill.tools[1].handler({
+  address: "0xYourAddress",
+  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+});
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `address` | ✅ | Arbitrum address to query |
+| `tokenAddress` | ❌ | ERC20 contract address. Omit for native ETH |
+| `rpcUrl` | ❌ | Custom RPC URL (see Production Usage below) |
+
+**Returns:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `balance` | `string` | Human-readable balance (e.g. `"1.5"`) |
+| `symbol` | `string` | `"ETH"` or token symbol |
+| `decimals` | `number` | 18 for ETH, or token decimals |
+| `raw` | `string` | Raw wei/smallest-unit value |
+
+---
+
+### `send_transaction`
+
+Send ETH from a private key-controlled account.
+
+> ⚠️ **Fire-and-forget**: returns `txHash` immediately after broadcast. Does **not** wait for on-chain confirmation. The transaction may still revert. Check the receipt separately if you need confirmation.
+
+```typescript
+const result = await skill.tools[2].handler({
+  privateKey: "0xYourPrivateKey",
+  to: "0xRecipientAddress",
+  amount: "0.01", // ETH, human-readable
+});
+if (result.success) {
+  console.log("txHash:", result.data.txHash);
+}
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `privateKey` | ✅ | Sender's private key (0x-prefixed hex) |
+| `to` | ✅ | Recipient address (0x-prefixed) |
+| `amount` | ✅ | ETH amount in human-readable format (e.g. `"0.1"`) |
+| `rpcUrl` | ❌ | Custom RPC URL |
+
+---
+
+### `sign_message`
+
+Sign a message using EIP-191 personal sign.
+
+```typescript
+const result = await skill.tools[3].handler({
+  privateKey: "0xYourPrivateKey",
+  message: "I agree to the terms",
+});
+if (result.success) {
+  const { signature, address } = result.data;
+  // Verify: ethers.verifyMessage("I agree to the terms", signature) === address
+}
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `privateKey` | ✅ | Private key (0x-prefixed hex) |
+| `message` | ✅ | Message text to sign |
+
+---
+
+## Error Handling
+
+All errors return `{ success: false, error: "<ErrorType>: <detail>" }`.
+
+| Error Type | Trigger |
+|------------|---------|
+| `ValidationError` | Invalid address, amount ≤ 0 |
+| `InvalidKeyError` | Malformed private key |
+| `InsufficientFundsError` | Not enough ETH for value + gas |
+| `NetworkError` | RPC timeout or connection failure |
+| `InvalidContractError` | ERC20 address is not a valid contract |
+| `TransactionError` | Other on-chain error |
+| `UnexpectedError` | Internal or unclassified failure |
+
+---
+
+## Security
+
+> ⚠️ **Critical**: `send_transaction` and `sign_message` accept `privateKey` as a plain string parameter. This means **the private key appears in the tool call's JSON input**, which may be logged by your agent runtime, conversation history, or middleware.
+
+**Your responsibility as the caller:**
+- Ensure your agent runtime does **not** log tool call inputs to persistent storage
+- Never hardcode private keys — use secure environment variables or vaults
+- This skill does NOT store, cache, or log private keys internally
+
+**This skill's guarantees:**
+- Private key only exists in handler memory scope during execution
+- No `console.log` of any private key or sensitive data
+- Fully stateless — no singleton, no cache, no side effects
+
+---
+
+## Production Usage
+
+The default RPC (`https://arb1.arbitrum.io/rpc`) is a public endpoint with **no SLA** and may have rate limits. For production agents with high call volume, use a private RPC:
+
+```typescript
+// Using Alchemy
+await handler({ address: "0x...", rpcUrl: "https://arb-mainnet.g.alchemy.com/v2/YOUR_KEY" });
+
+// Using Infura
+await handler({ address: "0x...", rpcUrl: "https://arbitrum-mainnet.infura.io/v3/YOUR_KEY" });
+```
+
+Providers: [Alchemy](https://alchemy.com), [Infura](https://infura.io), [QuickNode](https://quicknode.com)
+
+---
+
+## License
+
+MIT
