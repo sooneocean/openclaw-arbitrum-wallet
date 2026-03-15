@@ -2,7 +2,7 @@
 
 Arbitrum wallet management skill for [openclaw](https://github.com/sooneocean/openclaw-arbitrum-wallet) agents.
 
-Provides eight tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
+Provides nine tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
 
 ## Install
 
@@ -254,6 +254,41 @@ const result = await skill.tools[7].handler({
 | `spender` | ✅ | Address to approve (e.g. DEX router) |
 | `amount` | ✅ | Approval amount (human-readable) or `"unlimited"` |
 | `rpcUrl` | ❌ | Custom RPC URL |
+
+---
+
+### `get_allowance`
+
+Query the current ERC20 token allowance for a spender. Use before DeFi interactions to check if `approve_token` is needed.
+
+```typescript
+const result = await skill.tools[8].handler({
+  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC
+  owner: "0xYourAddress",
+  spender: "0xDEXRouterAddress",
+});
+if (result.success) {
+  console.log(result.data.allowance, result.data.symbol); // e.g. "1000" "USDC"
+}
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `tokenAddress` | ✅ | ERC20 token contract address |
+| `owner` | ✅ | Token owner address |
+| `spender` | ✅ | Spender address to check |
+| `rpcUrl` | ❌ | Custom RPC URL |
+
+**Returns:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `allowance` | `string` | Human-readable allowance |
+| `symbol` | `string` | Token symbol |
+| `decimals` | `number` | Token decimals |
+| `raw` | `string` | Raw allowance value |
 
 ---
 

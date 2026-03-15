@@ -24,6 +24,7 @@ export const ERC20_ABI = [
   "function symbol() view returns (string)",
   "function transfer(address to, uint256 amount) returns (bool)",
   "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
 ];
 
 // ============================================================
@@ -246,3 +247,39 @@ export interface ApproveTokenData {
 export type ApproveTokenHandler = (
   params: ApproveTokenParams
 ) => Promise<HandlerResult<ApproveTokenData>>;
+
+// ============================================================
+// FA9: get_allowance
+// ============================================================
+
+export interface GetAllowanceParams {
+  /** ERC20 token contract address (0x-prefixed) */
+  tokenAddress: string;
+  /** Token owner address (0x-prefixed) */
+  owner: string;
+  /** Spender address to check allowance for (0x-prefixed) */
+  spender: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetAllowanceData {
+  /** Token owner address */
+  owner: string;
+  /** Spender address */
+  spender: string;
+  /** Token contract address */
+  tokenAddress: string;
+  /** Human-readable allowance (decimals applied) */
+  allowance: string;
+  /** Token symbol */
+  symbol: string;
+  /** Token decimals */
+  decimals: number;
+  /** Raw allowance value as string */
+  raw: string;
+}
+
+export type GetAllowanceHandler = (
+  params: GetAllowanceParams
+) => Promise<HandlerResult<GetAllowanceData>>;

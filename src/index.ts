@@ -6,6 +6,7 @@ import { transferTokenHandler } from "./tools/transferToken.js";
 import { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 import { importWalletHandler } from "./tools/importWallet.js";
 import { approveTokenHandler } from "./tools/approveToken.js";
+import { getAllowanceHandler } from "./tools/getAllowance.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -16,6 +17,7 @@ export { transferTokenHandler } from "./tools/transferToken.js";
 export { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 export { importWalletHandler } from "./tools/importWallet.js";
 export { approveTokenHandler } from "./tools/approveToken.js";
+export { getAllowanceHandler } from "./tools/getAllowance.js";
 
 /**
  * openclaw skill manifest.
@@ -231,6 +233,35 @@ const manifest = {
         required: ["privateKey", "tokenAddress", "spender", "amount"],
       },
       handler: approveTokenHandler,
+    },
+    {
+      name: "get_allowance",
+      description:
+        "Query the current ERC20 token allowance for a spender. Returns how many tokens the spender is approved to transfer on behalf of the owner. Use this to check if an approve_token call is needed before a DeFi interaction.",
+      parameters: {
+        type: "object",
+        properties: {
+          tokenAddress: {
+            type: "string",
+            description: "ERC20 token contract address (0x-prefixed)",
+          },
+          owner: {
+            type: "string",
+            description: "Token owner address (0x-prefixed)",
+          },
+          spender: {
+            type: "string",
+            description: "Spender address to check allowance for (0x-prefixed)",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["tokenAddress", "owner", "spender"],
+      },
+      handler: getAllowanceHandler,
     },
   ],
 };
