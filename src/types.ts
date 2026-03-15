@@ -25,6 +25,8 @@ export const ERC20_ABI = [
   "function transfer(address to, uint256 amount) returns (bool)",
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
+  "function name() view returns (string)",
+  "function totalSupply() view returns (uint256)",
 ];
 
 // ============================================================
@@ -313,3 +315,33 @@ export interface EstimateGasData {
 export type EstimateGasHandler = (
   params: EstimateGasParams
 ) => Promise<HandlerResult<EstimateGasData>>;
+
+// ============================================================
+// FA11: get_token_info
+// ============================================================
+
+export interface GetTokenInfoParams {
+  /** ERC20 token contract address (0x-prefixed) */
+  tokenAddress: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetTokenInfoData {
+  /** Token contract address */
+  tokenAddress: string;
+  /** Token name (e.g. "USD Coin") */
+  name: string;
+  /** Token symbol (e.g. "USDC") */
+  symbol: string;
+  /** Token decimals */
+  decimals: number;
+  /** Total supply (human-readable) */
+  totalSupply: string;
+  /** Total supply raw value */
+  totalSupplyRaw: string;
+}
+
+export type GetTokenInfoHandler = (
+  params: GetTokenInfoParams
+) => Promise<HandlerResult<GetTokenInfoData>>;

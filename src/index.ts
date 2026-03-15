@@ -8,6 +8,7 @@ import { importWalletHandler } from "./tools/importWallet.js";
 import { approveTokenHandler } from "./tools/approveToken.js";
 import { getAllowanceHandler } from "./tools/getAllowance.js";
 import { estimateGasHandler } from "./tools/estimateGas.js";
+import { getTokenInfoHandler } from "./tools/getTokenInfo.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -20,6 +21,7 @@ export { importWalletHandler } from "./tools/importWallet.js";
 export { approveTokenHandler } from "./tools/approveToken.js";
 export { getAllowanceHandler } from "./tools/getAllowance.js";
 export { estimateGasHandler } from "./tools/estimateGas.js";
+export { getTokenInfoHandler } from "./tools/getTokenInfo.js";
 
 /**
  * openclaw skill manifest.
@@ -298,6 +300,27 @@ const manifest = {
         required: ["from", "to"],
       },
       handler: estimateGasHandler,
+    },
+    {
+      name: "get_token_info",
+      description:
+        "Get basic information about an ERC20 token: name, symbol, decimals, and total supply. Useful for discovering token details before interacting with it.",
+      parameters: {
+        type: "object",
+        properties: {
+          tokenAddress: {
+            type: "string",
+            description: "ERC20 token contract address (0x-prefixed)",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["tokenAddress"],
+      },
+      handler: getTokenInfoHandler,
     },
   ],
 };
