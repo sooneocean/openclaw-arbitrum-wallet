@@ -59,7 +59,7 @@ export { transferNftHandler } from "./tools/transferNft.js";
  */
 const manifest = {
   name: "arbitrum-wallet",
-  version: "1.5.0",
+  version: "1.6.0",
   description: "Arbitrum wallet management tools for openclaw agents",
   tools: [
     {
