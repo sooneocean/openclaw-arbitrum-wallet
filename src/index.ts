@@ -43,7 +43,7 @@ export { watchTransactionHandler } from "./tools/watchTransaction.js";
  */
 const manifest = {
   name: "arbitrum-wallet",
-  version: "1.3.0",
+  version: "1.4.0",
   description: "Arbitrum wallet management tools for openclaw agents",
   tools: [
     {
