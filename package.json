@@ -1,6 +1,6 @@
 {
   "name": "openclaw-arbitrum-wallet",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Multi-chain DeFi wallet skill for openclaw agents — 30 tools for wallets, tokens, swaps, NFTs, and liquidity",
   "keywords": [
     "arbitrum",

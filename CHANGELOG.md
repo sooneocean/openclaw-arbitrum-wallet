@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.8.1] - 2026-03-15
+
+### Fixed
+- RPC fallback support: `withFallback()` tries alternate RPCs on network failure
+- `getTokenPrice` BigInt precision: replaced Number() on 320-bit values with pure BigInt arithmetic
+- `removeLiquidity` P0: save decreaseLiquidity txHash, added slippageBps parameter
+- `unwrapEthHandler` P1: fixed wrong type signature (WrapEthParams → UnwrapEthParams)
+- `swapToken` P1: replaced placeholder parseUnits with Number() format validation
+- `addLiquidity` P1: added try-catch for parseUnits with ValidationError
+- Centralized `isInsufficientFundsError()` eliminating 5 duplicate checks
+
 ## [1.8.0] - 2026-03-15
 
 ### Changed
