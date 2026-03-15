@@ -2,7 +2,7 @@
 
 Arbitrum wallet management skill for [openclaw](https://github.com/sooneocean/openclaw-arbitrum-wallet) agents.
 
-Provides four tools: create wallets, query balances, send ETH, and sign messages — all on Arbitrum One.
+Provides seven tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
 
 ## Install
 
@@ -135,13 +135,107 @@ if (result.success) {
 
 ---
 
+### `transfer_token`
+
+Transfer ERC20 tokens from a private key-controlled account.
+
+> ⚠️ **Fire-and-forget**: returns `txHash` immediately after broadcast. Does **not** wait for on-chain confirmation.
+
+```typescript
+const result = await skill.tools[4].handler({
+  privateKey: "0xYourPrivateKey",
+  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC
+  to: "0xRecipientAddress",
+  amount: "100", // token amount, human-readable
+});
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `privateKey` | ✅ | Sender's private key (0x-prefixed hex) |
+| `tokenAddress` | ✅ | ERC20 token contract address |
+| `to` | ✅ | Recipient address (0x-prefixed) |
+| `amount` | ✅ | Token amount in human-readable format (e.g. `"100.5"`) |
+| `rpcUrl` | ❌ | Custom RPC URL |
+
+---
+
+### `get_transaction_receipt`
+
+Check the on-chain status of a previously sent transaction.
+
+```typescript
+const result = await skill.tools[5].handler({
+  txHash: "0xYourTxHash...",
+});
+if (result.success) {
+  // result.data.status: "success" | "reverted" | "pending"
+  console.log(result.data.status, result.data.blockNumber);
+}
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `txHash` | ✅ | Transaction hash (0x-prefixed, 66 chars) |
+| `rpcUrl` | ❌ | Custom RPC URL |
+
+**Returns:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | `"success"`, `"reverted"`, or `"pending"` |
+| `blockNumber` | `number \| null` | Block number (null if pending) |
+| `gasUsed` | `string \| null` | Gas used (null if pending) |
+| `from` | `string \| null` | Sender address |
+| `to` | `string \| null` | Recipient address |
+
+---
+
+### `import_wallet`
+
+Import an existing wallet from a private key or mnemonic phrase.
+
+```typescript
+// From private key
+const result = await skill.tools[6].handler({
+  privateKey: "0xYourExistingPrivateKey",
+});
+
+// From mnemonic
+const result2 = await skill.tools[6].handler({
+  mnemonic: "abandon abandon abandon ...",
+});
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `privateKey` | ❌* | Private key (0x-prefixed hex) |
+| `mnemonic` | ❌* | Mnemonic phrase (12 or 24 words) |
+
+\* Provide exactly one of `privateKey` or `mnemonic`.
+
+**Returns:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `address` | `string` | 0x-prefixed wallet address |
+| `privateKey` | `string` | 0x-prefixed private key |
+
+---
+
 ## Error Handling
 
 All errors return `{ success: false, error: "<ErrorType>: <detail>" }`.
 
 | Error Type | Trigger |
 |------------|---------|
-| `ValidationError` | Invalid address, amount ≤ 0 |
+| `ValidationError` | Invalid address, amount ≤ 0, invalid txHash format |
 | `InvalidKeyError` | Malformed private key |
 | `InsufficientFundsError` | Not enough ETH for value + gas |
 | `NetworkError` | RPC timeout or connection failure |
@@ -153,7 +247,7 @@ All errors return `{ success: false, error: "<ErrorType>: <detail>" }`.
 
 ## Security
 
-> ⚠️ **Critical**: `send_transaction` and `sign_message` accept `privateKey` as a plain string parameter. This means **the private key appears in the tool call's JSON input**, which may be logged by your agent runtime, conversation history, or middleware.
+> ⚠️ **Critical**: `send_transaction`, `transfer_token`, `sign_message`, and `import_wallet` accept `privateKey` as a plain string parameter. This means **the private key appears in the tool call's JSON input**, which may be logged by your agent runtime, conversation history, or middleware.
 
 **Your responsibility as the caller:**
 - Ensure your agent runtime does **not** log tool call inputs to persistent storage
