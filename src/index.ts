@@ -24,6 +24,7 @@ import { transferNftHandler } from "./tools/transferNft.js";
 import { encodeTxHandler } from "./tools/encodeTx.js";
 import { getBlockHandler } from "./tools/getBlock.js";
 import { getPortfolioHandler } from "./tools/getPortfolio.js";
+import { getSupportedChainsHandler } from "./tools/getSupportedChains.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -52,6 +53,7 @@ export { transferNftHandler } from "./tools/transferNft.js";
 export { encodeTxHandler } from "./tools/encodeTx.js";
 export { getBlockHandler } from "./tools/getBlock.js";
 export { getPortfolioHandler } from "./tools/getPortfolio.js";
+export { getSupportedChainsHandler } from "./tools/getSupportedChains.js";
 
 /**
  * openclaw skill manifest.
@@ -742,6 +744,17 @@ const manifest = {
         required: ["address"],
       },
       handler: getPortfolioHandler,
+    },
+    {
+      name: "get_supported_chains",
+      description:
+        "List all supported blockchain networks. Returns chain IDs, names, and whether Uniswap V3 is available. Currently supports: Arbitrum One (42161), Ethereum (1), Base (8453), Optimism (10). Use the chainId with any tool's rpcUrl parameter via the chain registry.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [] as string[],
+      },
+      handler: getSupportedChainsHandler,
     },
   ],
 };

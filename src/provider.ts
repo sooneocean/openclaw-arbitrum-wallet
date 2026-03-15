@@ -1,14 +1,17 @@
 import { JsonRpcProvider } from "ethers";
 import { DEFAULT_RPC_URL } from "./types.js";
 import { isNetworkError } from "./errors.js";
+import { resolveRpcUrl } from "./chains.js";
 
 const cache = new Map<string, JsonRpcProvider>();
 
 /**
- * Get a cached JsonRpcProvider instance. Same rpcUrl returns the same instance.
+ * Get a cached JsonRpcProvider instance.
+ * Accepts rpcUrl directly, or chainId to resolve from the chain registry.
+ * Priority: rpcUrl > chainId > DEFAULT_RPC_URL (Arbitrum One)
  */
-export function getProvider(rpcUrl?: string): JsonRpcProvider {
-  const url = rpcUrl ?? DEFAULT_RPC_URL;
+export function getProvider(rpcUrl?: string, chainId?: number): JsonRpcProvider {
+  const url = resolveRpcUrl(rpcUrl, chainId);
   let provider = cache.get(url);
   if (!provider) {
     provider = new JsonRpcProvider(url);
