@@ -614,3 +614,84 @@ export interface SignTypedDataData {
   /** Signer address */
   address: string;
 }
+
+// ============================================================
+// FA21: simulate_transaction
+// ============================================================
+
+export interface SimulateTransactionParams {
+  /** Sender address (0x-prefixed) */
+  from: string;
+  /** Target address (0x-prefixed) */
+  to: string;
+  /** Optional ETH value in human-readable format */
+  value?: string;
+  /** Optional contract calldata (hex) */
+  data?: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface SimulateTransactionData {
+  /** Whether the call would succeed */
+  success: boolean;
+  /** Return data (hex) if success, revert reason if failed */
+  returnData: string;
+  /** Estimated gas that would be used */
+  gasEstimate: string;
+  /** Decoded revert reason if available */
+  revertReason: string | null;
+}
+
+// ============================================================
+// FA22-24: NFT tools
+// ============================================================
+
+export interface GetNftMetadataParams {
+  /** NFT contract address (0x-prefixed) */
+  contractAddress: string;
+  /** Token ID */
+  tokenId: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetNftMetadataData {
+  contractAddress: string;
+  tokenId: string;
+  owner: string;
+  tokenURI: string;
+  name: string;
+  symbol: string;
+}
+
+export interface TransferNftParams {
+  /** Sender's private key (0x-prefixed hex) */
+  privateKey: string;
+  /** NFT contract address (0x-prefixed) */
+  contractAddress: string;
+  /** Token ID to transfer */
+  tokenId: string;
+  /** Recipient address (0x-prefixed) */
+  to: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface TransferNftData {
+  txHash: string;
+  from: string;
+  to: string;
+  contractAddress: string;
+  tokenId: string;
+}
+
+/** Minimal ERC721 ABI */
+export const ERC721_ABI = [
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "function tokenURI(uint256 tokenId) view returns (string)",
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function safeTransferFrom(address from, address to, uint256 tokenId)",
+  "function balanceOf(address owner) view returns (uint256)",
+];

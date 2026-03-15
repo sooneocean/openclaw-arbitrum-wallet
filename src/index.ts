@@ -18,6 +18,9 @@ import { multicallReadHandler } from "./tools/multicallRead.js";
 import { getPoolInfoHandler } from "./tools/getPoolInfo.js";
 import { decodeTxHandler } from "./tools/decodeTx.js";
 import { signTypedDataHandler } from "./tools/signTypedData.js";
+import { simulateTransactionHandler } from "./tools/simulateTransaction.js";
+import { getNftMetadataHandler } from "./tools/getNftMetadata.js";
+import { transferNftHandler } from "./tools/transferNft.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -40,6 +43,9 @@ export { multicallReadHandler } from "./tools/multicallRead.js";
 export { getPoolInfoHandler } from "./tools/getPoolInfo.js";
 export { decodeTxHandler } from "./tools/decodeTx.js";
 export { signTypedDataHandler } from "./tools/signTypedData.js";
+export { simulateTransactionHandler } from "./tools/simulateTransaction.js";
+export { getNftMetadataHandler } from "./tools/getNftMetadata.js";
+export { transferNftHandler } from "./tools/transferNft.js";
 
 /**
  * openclaw skill manifest.
@@ -637,6 +643,55 @@ const manifest = {
         required: ["privateKey", "domain", "types", "value"],
       },
       handler: signTypedDataHandler,
+    },
+    {
+      name: "simulate_transaction",
+      description:
+        "Simulate a transaction using eth_call without broadcasting it. Returns whether it would succeed or revert, the return data, estimated gas, and decoded revert reason. Use this before sending real transactions to verify they will succeed.",
+      parameters: {
+        type: "object",
+        properties: {
+          from: { type: "string", description: "Sender address (0x-prefixed)" },
+          to: { type: "string", description: "Target address (0x-prefixed)" },
+          value: { type: "string", description: "Optional ETH value (e.g. '0.1')" },
+          data: { type: "string", description: "Optional contract calldata (hex)" },
+          rpcUrl: { type: "string", description: "Optional custom RPC URL" },
+        },
+        required: ["from", "to"],
+      },
+      handler: simulateTransactionHandler,
+    },
+    {
+      name: "get_nft_metadata",
+      description:
+        "Get metadata for an ERC721 NFT: owner, tokenURI, collection name, and symbol. Use this to inspect NFTs before transferring or to verify ownership.",
+      parameters: {
+        type: "object",
+        properties: {
+          contractAddress: { type: "string", description: "ERC721 contract address (0x-prefixed)" },
+          tokenId: { type: "string", description: "Token ID (numeric string)" },
+          rpcUrl: { type: "string", description: "Optional custom RPC URL" },
+        },
+        required: ["contractAddress", "tokenId"],
+      },
+      handler: getNftMetadataHandler,
+    },
+    {
+      name: "transfer_nft",
+      description:
+        "Transfer an ERC721 NFT to another address using safeTransferFrom. Returns txHash immediately (fire-and-forget). The sender must own the NFT.",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: { type: "string", description: "Sender's private key (0x-prefixed hex)" },
+          contractAddress: { type: "string", description: "ERC721 contract address (0x-prefixed)" },
+          tokenId: { type: "string", description: "Token ID to transfer (numeric string)" },
+          to: { type: "string", description: "Recipient address (0x-prefixed)" },
+          rpcUrl: { type: "string", description: "Optional custom RPC URL" },
+        },
+        required: ["privateKey", "contractAddress", "tokenId", "to"],
+      },
+      handler: transferNftHandler,
     },
   ],
 };
