@@ -345,3 +345,25 @@ export interface GetTokenInfoData {
 export type GetTokenInfoHandler = (
   params: GetTokenInfoParams
 ) => Promise<HandlerResult<GetTokenInfoData>>;
+
+// ============================================================
+// FA12: verify_signature
+// ============================================================
+
+export interface VerifySignatureParams {
+  /** The original message that was signed */
+  message: string;
+  /** The EIP-191 signature to verify (hex string) */
+  signature: string;
+}
+
+export interface VerifySignatureData {
+  /** Recovered signer address */
+  signerAddress: string;
+  /** Whether the signature is valid (always true if recovery succeeds) */
+  isValid: boolean;
+}
+
+export type VerifySignatureHandler = (
+  params: VerifySignatureParams
+) => Promise<HandlerResult<VerifySignatureData>>;

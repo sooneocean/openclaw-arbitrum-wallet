@@ -9,6 +9,7 @@ import { approveTokenHandler } from "./tools/approveToken.js";
 import { getAllowanceHandler } from "./tools/getAllowance.js";
 import { estimateGasHandler } from "./tools/estimateGas.js";
 import { getTokenInfoHandler } from "./tools/getTokenInfo.js";
+import { verifySignatureHandler } from "./tools/verifySignature.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -22,6 +23,7 @@ export { approveTokenHandler } from "./tools/approveToken.js";
 export { getAllowanceHandler } from "./tools/getAllowance.js";
 export { estimateGasHandler } from "./tools/estimateGas.js";
 export { getTokenInfoHandler } from "./tools/getTokenInfo.js";
+export { verifySignatureHandler } from "./tools/verifySignature.js";
 
 /**
  * openclaw skill manifest.
@@ -321,6 +323,26 @@ const manifest = {
         required: ["tokenAddress"],
       },
       handler: getTokenInfoHandler,
+    },
+    {
+      name: "verify_signature",
+      description:
+        "Verify an EIP-191 personal signature and recover the signer's address. Use this to confirm who signed a message. Returns the recovered address if the signature is valid.",
+      parameters: {
+        type: "object",
+        properties: {
+          message: {
+            type: "string",
+            description: "The original message that was signed",
+          },
+          signature: {
+            type: "string",
+            description: "The EIP-191 signature to verify (hex string)",
+          },
+        },
+        required: ["message", "signature"],
+      },
+      handler: verifySignatureHandler,
     },
   ],
 };
