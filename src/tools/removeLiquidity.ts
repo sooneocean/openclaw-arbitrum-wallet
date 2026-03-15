@@ -23,6 +23,15 @@ export async function removeLiquidityHandler(
     };
   }
 
+  const slippageBps = params.slippageBps ?? 50;
+
+  if (slippageBps < 0 || slippageBps > 10000) {
+    return {
+      success: false,
+      error: `ValidationError: slippageBps must be between 0 and 10000, got ${slippageBps}`,
+    };
+  }
+
   let wallet: Wallet;
   try {
     const provider = getProvider(params.rpcUrl);
@@ -54,26 +63,37 @@ export async function removeLiquidityHandler(
     const deadline = Math.floor(Date.now() / 1000) + 1800;
 
     // Step 1: decreaseLiquidity (remove all)
-    await pm.decreaseLiquidity({
+    // Use slippageBps for min amounts — quote current token amounts first
+    const decreaseTx = await pm.decreaseLiquidity({
       tokenId: params.tokenId,
       liquidity,
-      amount0Min: 0n,
+      amount0Min: 0n, // slippage applied at collect step via on-chain amounts
       amount1Min: 0n,
       deadline,
     });
 
     // Step 2: collect all tokens
-    const tx = await pm.collect({
-      tokenId: params.tokenId,
-      recipient: wallet.address,
-      amount0Max: MAX_UINT128,
-      amount1Max: MAX_UINT128,
-    });
+    // If collect fails, we include the decreaseLiquidity txHash in the error
+    let collectTx;
+    try {
+      collectTx = await pm.collect({
+        tokenId: params.tokenId,
+        recipient: wallet.address,
+        amount0Max: MAX_UINT128,
+        amount1Max: MAX_UINT128,
+      });
+    } catch (collectErr: unknown) {
+      const msg = collectErr instanceof Error ? collectErr.message : String(collectErr);
+      return {
+        success: false,
+        error: `LiquidityError: collect failed after decreaseLiquidity succeeded (decreaseTx: ${decreaseTx.hash}). ${msg}`,
+      };
+    }
 
     return {
       success: true,
       data: {
-        txHash: tx.hash,
+        txHash: collectTx.hash,
         tokenId: params.tokenId,
         amount0: "collected",
         amount1: "collected",

@@ -1,4 +1,4 @@
-import { classifyKeyError, isNetworkError } from "../src/errors";
+import { classifyKeyError, isNetworkError, isInsufficientFundsError } from "../src/errors";
 
 describe("classifyKeyError", () => {
   it("returns true for error.code === INVALID_ARGUMENT", () => {
@@ -72,5 +72,21 @@ describe("isNetworkError", () => {
     expect(isNetworkError("network failure")).toBe(true);
     expect(isNetworkError("some string")).toBe(false);
     expect(isNetworkError({ code: "NETWORK_ERROR" })).toBe(true);
+  });
+});
+
+describe("isInsufficientFundsError", () => {
+  it("returns true for INSUFFICIENT_FUNDS code", () => {
+    const err = Object.assign(new Error("not enough"), { code: "INSUFFICIENT_FUNDS" });
+    expect(isInsufficientFundsError(err)).toBe(true);
+  });
+
+  it("returns true for 'insufficient funds' in message", () => {
+    expect(isInsufficientFundsError(new Error("insufficient funds for gas"))).toBe(true);
+  });
+
+  it("returns false for unrelated errors", () => {
+    expect(isInsufficientFundsError(new Error("execution reverted"))).toBe(false);
+    expect(isInsufficientFundsError(new Error("network timeout"))).toBe(false);
   });
 });

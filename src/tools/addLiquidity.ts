@@ -61,8 +61,21 @@ export async function addLiquidityHandler(
     return { success: false, error: `LiquidityError: Failed to get decimals — ${msg}` };
   }
 
-  const amount0Desired = parseUnits(params.amount0Desired, dec0);
-  const amount1Desired = parseUnits(params.amount1Desired, dec1);
+  let amount0Desired: bigint;
+  let amount1Desired: bigint;
+  try {
+    amount0Desired = parseUnits(params.amount0Desired, dec0);
+  } catch {
+    return { success: false, error: `ValidationError: Invalid amount0Desired "${params.amount0Desired}"` };
+  }
+  try {
+    amount1Desired = parseUnits(params.amount1Desired, dec1);
+  } catch {
+    return { success: false, error: `ValidationError: Invalid amount1Desired "${params.amount1Desired}"` };
+  }
+  if (amount0Desired <= 0n && amount1Desired <= 0n) {
+    return { success: false, error: "ValidationError: At least one amount must be greater than 0" };
+  }
   const amount0Min = (amount0Desired * BigInt(10000 - slippageBps)) / 10000n;
   const amount1Min = (amount1Desired * BigInt(10000 - slippageBps)) / 10000n;
   const deadline = Math.floor(Date.now() / 1000) + 1800;

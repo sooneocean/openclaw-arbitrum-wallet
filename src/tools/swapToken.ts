@@ -13,7 +13,7 @@ import {
   HandlerResult,
   ERC20_ABI,
 } from "../types.js";
-import { classifyKeyError, isNetworkError } from "../errors.js";
+import { classifyKeyError, isNetworkError, isInsufficientFundsError } from "../errors.js";
 import { getProvider, withRetry } from "../provider.js";
 import {
   SWAP_ROUTER_ADDRESS,
@@ -93,25 +93,17 @@ export async function swapTokenHandler(
     };
   }
 
-  // Parse amountIn
-  let amountIn: bigint;
-  try {
-    amountIn = tokenInIsEth
-      ? parseEther(params.amountIn)
-      : parseUnits(params.amountIn, 18); // placeholder, will re-parse with actual decimals
-  } catch {
+  // Validate amountIn format (actual parsing happens after decimals are known)
+  const amountNum = Number(params.amountIn);
+  if (isNaN(amountNum) || amountNum <= 0) {
     return {
       success: false,
-      error: `ValidationError: Invalid amountIn "${params.amountIn}"`,
+      error: `ValidationError: amountIn must be a positive number, got "${params.amountIn}"`,
     };
   }
 
-  if (amountIn <= 0n) {
-    return {
-      success: false,
-      error: `ValidationError: amountIn must be greater than 0, got "${params.amountIn}"`,
-    };
-  }
+  // Will be set after decimals are resolved
+  let amountIn: bigint;
 
   // --- Build wallet ---
 
@@ -134,9 +126,11 @@ export async function swapTokenHandler(
   const actualTokenIn = tokenInIsEth ? WETH_ADDRESS : params.tokenIn;
   const actualTokenOut = tokenOutIsEth ? WETH_ADDRESS : params.tokenOut;
 
-  // Get tokenIn decimals and re-parse amountIn
+  // Parse amountIn with correct decimals
   let tokenInDecimals = 18;
-  if (!tokenInIsEth) {
+  if (tokenInIsEth) {
+    amountIn = parseEther(params.amountIn);
+  } else {
     try {
       const tokenContract = new Contract(params.tokenIn, ERC20_ABI, provider);
       const dec = await withRetry(() => tokenContract.decimals());
@@ -295,14 +289,10 @@ export async function swapTokenHandler(
       },
     };
   } catch (err: unknown) {
-    const code = (err as { code?: string }).code;
     const msg = err instanceof Error ? err.message : String(err);
     const msgLower = msg.toLowerCase();
 
-    if (
-      code === "INSUFFICIENT_FUNDS" ||
-      msgLower.includes("insufficient funds")
-    ) {
+    if (isInsufficientFundsError(err)) {
       return { success: false, error: `InsufficientFundsError: ${msg}` };
     }
     if (

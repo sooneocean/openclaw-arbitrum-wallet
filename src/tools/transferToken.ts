@@ -5,7 +5,7 @@ import {
   HandlerResult,
   ERC20_ABI,
 } from "../types.js";
-import { classifyKeyError, isNetworkError } from "../errors.js";
+import { classifyKeyError, isNetworkError, isInsufficientFundsError } from "../errors.js";
 import { getProvider, withRetry } from "../provider.js";
 
 export async function transferTokenHandler(
@@ -91,10 +91,7 @@ export async function transferTokenHandler(
     if (classifyKeyError(err)) {
       return { success: false, error: `InvalidKeyError: ${msg}` };
     }
-    if (
-      (err as { code?: string }).code === "INSUFFICIENT_FUNDS" ||
-      msg.toLowerCase().includes("insufficient funds")
-    ) {
+    if (isInsufficientFundsError(err)) {
       return { success: false, error: `InsufficientFundsError: ${msg}` };
     }
     if (isNetworkError(err)) {

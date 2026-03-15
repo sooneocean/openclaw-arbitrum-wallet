@@ -1,5 +1,5 @@
 import { Wallet, Contract, parseEther } from "ethers";
-import { WrapEthParams, WrapEthData, HandlerResult } from "../types.js";
+import { WrapEthParams, WrapEthData, UnwrapEthParams, UnwrapEthData, HandlerResult } from "../types.js";
 import { classifyKeyError, isNetworkError } from "../errors.js";
 import { getProvider } from "../provider.js";
 import { WETH_ADDRESS } from "../uniswap.js";
@@ -58,8 +58,8 @@ export async function wrapEthHandler(
 }
 
 export async function unwrapEthHandler(
-  params: WrapEthParams
-): Promise<HandlerResult<WrapEthData>> {
+  params: UnwrapEthParams
+): Promise<HandlerResult<UnwrapEthData>> {
   let amount: bigint;
   try {
     amount = parseEther(params.amount);

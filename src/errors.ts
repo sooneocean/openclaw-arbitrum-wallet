@@ -22,6 +22,15 @@ export function isNetworkError(err: unknown): boolean {
   );
 }
 
+export function isInsufficientFundsError(err: unknown): boolean {
+  const code = (err as { code?: string }).code;
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    code === "INSUFFICIENT_FUNDS" ||
+    msg.toLowerCase().includes("insufficient funds")
+  );
+}
+
 export function classifyKeyError(err: unknown): boolean {
   const code = (err as { code?: string }).code;
   const msg = err instanceof Error ? err.message : String(err);

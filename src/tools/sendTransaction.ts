@@ -4,7 +4,7 @@ import {
   SendTransactionData,
   HandlerResult,
 } from "../types.js";
-import { classifyKeyError, isNetworkError } from "../errors.js";
+import { classifyKeyError, isNetworkError, isInsufficientFundsError } from "../errors.js";
 import { getProvider } from "../provider.js";
 
 export async function sendTransactionHandler(
@@ -67,13 +67,9 @@ export async function sendTransactionHandler(
       },
     };
   } catch (err: unknown) {
-    const code = (err as { code?: string }).code;
     const msg = err instanceof Error ? err.message : String(err);
 
-    if (
-      code === "INSUFFICIENT_FUNDS" ||
-      msg.toLowerCase().includes("insufficient funds")
-    ) {
+    if (isInsufficientFundsError(err)) {
       return { success: false, error: `InsufficientFundsError: ${msg}` };
     }
     if (classifyKeyError(err)) {

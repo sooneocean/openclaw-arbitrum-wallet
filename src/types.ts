@@ -781,6 +781,8 @@ export interface AddLiquidityData {
 export interface RemoveLiquidityParams {
   privateKey: string;
   tokenId: string;
+  /** Slippage tolerance in basis points. Default: 50 (0.5%) */
+  slippageBps?: number;
   rpcUrl?: string;
 }
 
