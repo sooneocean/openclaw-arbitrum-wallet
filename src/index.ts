@@ -25,6 +25,8 @@ import { encodeTxHandler } from "./tools/encodeTx.js";
 import { getBlockHandler } from "./tools/getBlock.js";
 import { getPortfolioHandler } from "./tools/getPortfolio.js";
 import { getSupportedChainsHandler } from "./tools/getSupportedChains.js";
+import { addLiquidityHandler } from "./tools/addLiquidity.js";
+import { removeLiquidityHandler } from "./tools/removeLiquidity.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -54,6 +56,8 @@ export { encodeTxHandler } from "./tools/encodeTx.js";
 export { getBlockHandler } from "./tools/getBlock.js";
 export { getPortfolioHandler } from "./tools/getPortfolio.js";
 export { getSupportedChainsHandler } from "./tools/getSupportedChains.js";
+export { addLiquidityHandler } from "./tools/addLiquidity.js";
+export { removeLiquidityHandler } from "./tools/removeLiquidity.js";
 
 /**
  * openclaw skill manifest.
@@ -67,7 +71,7 @@ export { getSupportedChainsHandler } from "./tools/getSupportedChains.js";
  */
 const manifest = {
   name: "arbitrum-wallet",
-  version: "1.6.0",
+  version: "1.7.0",
   description: "Arbitrum wallet management tools for openclaw agents",
   tools: [
     {
@@ -755,6 +759,43 @@ const manifest = {
         required: [] as string[],
       },
       handler: getSupportedChainsHandler,
+    },
+    {
+      name: "add_liquidity",
+      description:
+        "Add liquidity to a Uniswap V3 pool by minting a new position. Requires both tokens to be approved to the NonfungiblePositionManager (0xC36442b4a4522E871399CD717aBDD847Ab11FE88). Returns txHash (fire-and-forget). Token ordering matters — token0 must be the lower address.",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: { type: "string", description: "Private key (0x-prefixed hex)" },
+          token0: { type: "string", description: "Lower-address token (0x-prefixed)" },
+          token1: { type: "string", description: "Higher-address token (0x-prefixed)" },
+          fee: { type: "number", description: "Pool fee tier: 100, 500, 3000, or 10000" },
+          tickLower: { type: "number", description: "Lower tick boundary of the position" },
+          tickUpper: { type: "number", description: "Upper tick boundary of the position" },
+          amount0Desired: { type: "string", description: "Desired amount of token0 (human-readable)" },
+          amount1Desired: { type: "string", description: "Desired amount of token1 (human-readable)" },
+          slippageBps: { type: "number", description: "Slippage tolerance in basis points. Default: 50 (0.5%)" },
+          rpcUrl: { type: "string", description: "Optional custom RPC URL" },
+        },
+        required: ["privateKey", "token0", "token1", "fee", "tickLower", "tickUpper", "amount0Desired", "amount1Desired"],
+      },
+      handler: addLiquidityHandler,
+    },
+    {
+      name: "remove_liquidity",
+      description:
+        "Remove all liquidity from a Uniswap V3 position and collect all tokens. Calls decreaseLiquidity (full amount) + collect. Returns txHash. The caller must own the position NFT.",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: { type: "string", description: "Private key (0x-prefixed hex)" },
+          tokenId: { type: "string", description: "Position NFT token ID (numeric string)" },
+          rpcUrl: { type: "string", description: "Optional custom RPC URL" },
+        },
+        required: ["privateKey", "tokenId"],
+      },
+      handler: removeLiquidityHandler,
     },
   ],
 };

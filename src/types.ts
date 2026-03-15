@@ -753,6 +753,44 @@ export interface GetPortfolioData {
   }[];
 }
 
+// ============================================================
+// FA28-29: DeFi Liquidity
+// ============================================================
+
+export interface AddLiquidityParams {
+  privateKey: string;
+  token0: string;
+  token1: string;
+  fee: number;
+  tickLower: number;
+  tickUpper: number;
+  amount0Desired: string;
+  amount1Desired: string;
+  slippageBps?: number;
+  rpcUrl?: string;
+}
+
+export interface AddLiquidityData {
+  txHash: string;
+  tokenId: string;
+  liquidity: string;
+  amount0: string;
+  amount1: string;
+}
+
+export interface RemoveLiquidityParams {
+  privateKey: string;
+  tokenId: string;
+  rpcUrl?: string;
+}
+
+export interface RemoveLiquidityData {
+  txHash: string;
+  tokenId: string;
+  amount0: string;
+  amount1: string;
+}
+
 /** Minimal ERC721 ABI */
 export const ERC721_ABI = [
   "function ownerOf(uint256 tokenId) view returns (address)",
