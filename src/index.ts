@@ -13,6 +13,11 @@ import { verifySignatureHandler } from "./tools/verifySignature.js";
 import { swapTokenHandler } from "./tools/swapToken.js";
 import { getTokenPriceHandler } from "./tools/getTokenPrice.js";
 import { watchTransactionHandler } from "./tools/watchTransaction.js";
+import { wrapEthHandler, unwrapEthHandler } from "./tools/wrapEth.js";
+import { multicallReadHandler } from "./tools/multicallRead.js";
+import { getPoolInfoHandler } from "./tools/getPoolInfo.js";
+import { decodeTxHandler } from "./tools/decodeTx.js";
+import { signTypedDataHandler } from "./tools/signTypedData.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -30,6 +35,11 @@ export { verifySignatureHandler } from "./tools/verifySignature.js";
 export { swapTokenHandler } from "./tools/swapToken.js";
 export { getTokenPriceHandler } from "./tools/getTokenPrice.js";
 export { watchTransactionHandler } from "./tools/watchTransaction.js";
+export { wrapEthHandler, unwrapEthHandler } from "./tools/wrapEth.js";
+export { multicallReadHandler } from "./tools/multicallRead.js";
+export { getPoolInfoHandler } from "./tools/getPoolInfo.js";
+export { decodeTxHandler } from "./tools/decodeTx.js";
+export { signTypedDataHandler } from "./tools/signTypedData.js";
 
 /**
  * openclaw skill manifest.
@@ -463,6 +473,170 @@ const manifest = {
         required: ["txHash"],
       },
       handler: watchTransactionHandler,
+    },
+    {
+      name: "wrap_eth",
+      description:
+        "Wrap native ETH into WETH (Wrapped ETH) on Arbitrum One. Many DeFi protocols require WETH instead of native ETH. Returns txHash immediately (fire-and-forget).",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: {
+            type: "string",
+            description: "Private key (0x-prefixed hex)",
+          },
+          amount: {
+            type: "string",
+            description: "Amount of ETH to wrap (e.g. '0.1')",
+          },
+          rpcUrl: {
+            type: "string",
+            description: "Optional custom RPC URL",
+          },
+        },
+        required: ["privateKey", "amount"],
+      },
+      handler: wrapEthHandler,
+    },
+    {
+      name: "unwrap_eth",
+      description:
+        "Unwrap WETH back to native ETH on Arbitrum One. Returns txHash immediately (fire-and-forget).",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: {
+            type: "string",
+            description: "Private key (0x-prefixed hex)",
+          },
+          amount: {
+            type: "string",
+            description: "Amount of WETH to unwrap (e.g. '0.1')",
+          },
+          rpcUrl: {
+            type: "string",
+            description: "Optional custom RPC URL",
+          },
+        },
+        required: ["privateKey", "amount"],
+      },
+      handler: unwrapEthHandler,
+    },
+    {
+      name: "multicall_read",
+      description:
+        "Batch multiple read-only contract calls into a single RPC request using Multicall3. Returns all results atomically at the same block. Useful for fetching multiple balances, prices, or states efficiently.",
+      parameters: {
+        type: "object",
+        properties: {
+          calls: {
+            type: "array",
+            description:
+              "Array of call descriptors, each with target (contract address) and callData (ABI-encoded hex)",
+            items: {
+              type: "object",
+              properties: {
+                target: {
+                  type: "string",
+                  description: "Contract address (0x-prefixed)",
+                },
+                callData: {
+                  type: "string",
+                  description: "ABI-encoded function call data (hex)",
+                },
+              },
+              required: ["target", "callData"],
+            },
+          },
+          rpcUrl: {
+            type: "string",
+            description: "Optional custom RPC URL",
+          },
+        },
+        required: ["calls"],
+      },
+      handler: multicallReadHandler,
+    },
+    {
+      name: "get_pool_info",
+      description:
+        "Query Uniswap V3 pool state on Arbitrum One. Returns pool address, token ordering, current price (sqrtPriceX96), tick, liquidity, and lock status. Use this to evaluate pool depth before swapping.",
+      parameters: {
+        type: "object",
+        properties: {
+          tokenA: {
+            type: "string",
+            description: "First token ERC20 address (0x-prefixed)",
+          },
+          tokenB: {
+            type: "string",
+            description: "Second token ERC20 address (0x-prefixed)",
+          },
+          fee: {
+            type: "number",
+            description:
+              "Uniswap V3 pool fee tier: 100, 500, 3000, or 10000. Default: 3000",
+          },
+          rpcUrl: {
+            type: "string",
+            description: "Optional custom RPC URL",
+          },
+        },
+        required: ["tokenA", "tokenB"],
+      },
+      handler: getPoolInfoHandler,
+    },
+    {
+      name: "decode_tx",
+      description:
+        "Decode ABI-encoded transaction calldata into human-readable function name and arguments. Provide the ABI of the target contract to decode. Useful for understanding what a transaction does before or after execution.",
+      parameters: {
+        type: "object",
+        properties: {
+          data: {
+            type: "string",
+            description: "ABI-encoded calldata to decode (0x-prefixed hex)",
+          },
+          abi: {
+            type: "array",
+            description:
+              'Human-readable ABI array (e.g. ["function transfer(address to, uint256 amount)"])',
+            items: { type: "string" },
+          },
+        },
+        required: ["data", "abi"],
+      },
+      handler: decodeTxHandler,
+    },
+    {
+      name: "sign_typed_data",
+      description:
+        "Sign structured data using EIP-712 (typed data signing). Required for gasless approvals (Permit2), meta-transactions, and protocol-specific signatures. Returns the signature and signer address.",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: {
+            type: "string",
+            description: "Private key (0x-prefixed hex)",
+          },
+          domain: {
+            type: "object",
+            description:
+              "EIP-712 domain with optional fields: name, version, chainId, verifyingContract",
+          },
+          types: {
+            type: "object",
+            description:
+              "EIP-712 types object (excluding EIP712Domain). Maps type name to array of {name, type} fields.",
+          },
+          value: {
+            type: "object",
+            description: "The structured data to sign",
+          },
+        },
+        required: ["privateKey", "domain", "types", "value"],
+      },
+      handler: signTypedDataHandler,
     },
   ],
 };

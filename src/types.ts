@@ -483,3 +483,134 @@ export interface WatchTransactionData {
 export type WatchTransactionHandler = (
   params: WatchTransactionParams
 ) => Promise<HandlerResult<WatchTransactionData>>;
+
+// ============================================================
+// FA16: wrap_eth / unwrap_eth
+// ============================================================
+
+export interface WrapEthParams {
+  /** Private key (0x-prefixed hex) */
+  privateKey: string;
+  /** Amount of ETH to wrap in human-readable format (e.g. '0.1') */
+  amount: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface WrapEthData {
+  txHash: string;
+  amount: string;
+  wethAddress: string;
+}
+
+export interface UnwrapEthParams {
+  /** Private key (0x-prefixed hex) */
+  privateKey: string;
+  /** Amount of WETH to unwrap in human-readable format (e.g. '0.1') */
+  amount: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface UnwrapEthData {
+  txHash: string;
+  amount: string;
+  wethAddress: string;
+}
+
+// ============================================================
+// FA17: multicall_read
+// ============================================================
+
+export interface MulticallReadParams {
+  /** Array of call descriptors */
+  calls: {
+    /** Contract address (0x-prefixed) */
+    target: string;
+    /** ABI-encoded calldata (hex) */
+    callData: string;
+  }[];
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface MulticallReadData {
+  /** Results array, one per call */
+  results: {
+    success: boolean;
+    returnData: string;
+  }[];
+  /** Block number at which the multicall was executed */
+  blockNumber: number;
+}
+
+// ============================================================
+// FA18: get_pool_info
+// ============================================================
+
+export interface GetPoolInfoParams {
+  /** Token A address (0x-prefixed) */
+  tokenA: string;
+  /** Token B address (0x-prefixed) */
+  tokenB: string;
+  /** Pool fee tier. Default: 3000 */
+  fee?: number;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetPoolInfoData {
+  poolAddress: string;
+  token0: string;
+  token1: string;
+  fee: number;
+  sqrtPriceX96: string;
+  tick: number;
+  liquidity: string;
+  unlocked: boolean;
+}
+
+// ============================================================
+// FA19: decode_tx
+// ============================================================
+
+export interface DecodeTxParams {
+  /** ABI-encoded calldata to decode (hex) */
+  data: string;
+  /** Human-readable ABI array for the target contract */
+  abi: string[];
+}
+
+export interface DecodeTxData {
+  /** Decoded function name */
+  functionName: string;
+  /** Decoded function arguments */
+  args: Record<string, string>;
+}
+
+// ============================================================
+// FA20: sign_typed_data
+// ============================================================
+
+export interface SignTypedDataParams {
+  /** Private key (0x-prefixed hex) */
+  privateKey: string;
+  /** EIP-712 domain */
+  domain: {
+    name?: string;
+    version?: string;
+    chainId?: number;
+    verifyingContract?: string;
+  };
+  /** EIP-712 types (excluding EIP712Domain) */
+  types: Record<string, { name: string; type: string }[]>;
+  /** The data to sign */
+  value: Record<string, unknown>;
+}
+
+export interface SignTypedDataData {
+  /** EIP-712 signature hex string */
+  signature: string;
+  /** Signer address */
+  address: string;
+}
