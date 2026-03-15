@@ -2,7 +2,7 @@
 
 Arbitrum wallet management skill for [openclaw](https://github.com/sooneocean/openclaw-arbitrum-wallet) agents.
 
-Provides nine tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
+Provides eleven tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
 
 ## Install
 
@@ -289,6 +289,68 @@ if (result.success) {
 | `symbol` | `string` | Token symbol |
 | `decimals` | `number` | Token decimals |
 | `raw` | `string` | Raw allowance value |
+
+---
+
+### `estimate_gas`
+
+Estimate the gas cost for a transaction before sending it.
+
+```typescript
+const result = await skill.tools[9].handler({
+  from: "0xYourAddress",
+  to: "0xRecipientAddress",
+  value: "0.1", // optional ETH value
+});
+if (result.success) {
+  console.log(result.data.gasEstimate, "gas units");
+  console.log(result.data.gasPriceGwei, "Gwei");
+  console.log(result.data.estimatedCostEth, "ETH total cost");
+}
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `from` | ✅ | Sender address |
+| `to` | ✅ | Recipient or contract address |
+| `value` | ❌ | ETH value (human-readable) |
+| `data` | ❌ | Contract call data (hex) |
+| `rpcUrl` | ❌ | Custom RPC URL |
+
+---
+
+### `get_token_info`
+
+Get basic information about an ERC20 token.
+
+```typescript
+const result = await skill.tools[10].handler({
+  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+});
+if (result.success) {
+  console.log(result.data.name, result.data.symbol, result.data.decimals);
+  // "USD Coin" "USDC" 6
+}
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `tokenAddress` | ✅ | ERC20 token contract address |
+| `rpcUrl` | ❌ | Custom RPC URL |
+
+**Returns:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | `string` | Token name |
+| `symbol` | `string` | Token symbol |
+| `decimals` | `number` | Token decimals |
+| `totalSupply` | `string` | Total supply (human-readable) |
+| `totalSupplyRaw` | `string` | Raw total supply |
 
 ---
 
