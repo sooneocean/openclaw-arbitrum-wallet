@@ -1,0 +1,35 @@
+{
+  "version": "3.0.0",
+  "feature": "price-and-watch",
+  "spec_mode": "quick",
+  "work_type": "new_feature",
+  "status": "completed",
+  "current_stage": "S7",
+  "execution_mode": "autopilot",
+  "spec_folder": "dev/specs/price-and-watch",
+  "last_updated": "2026-03-15T14:30:00Z",
+  "last_updated_by": "claude",
+  "completed_at": "2026-03-15T14:30:00Z",
+  "stages": {
+    "s0": { "status": "completed" },
+    "s4": {
+      "status": "completed",
+      "output": {
+        "files_changed": [
+          "src/uniswap.ts",
+          "src/tools/getTokenPrice.ts",
+          "src/tools/watchTransaction.ts",
+          "src/types.ts",
+          "src/index.ts",
+          "tests/getTokenPrice.test.ts",
+          "tests/watchTransaction.test.ts"
+        ]
+      }
+    },
+    "s6": {
+      "status": "completed",
+      "output": { "test_suites": 17, "tests_total": 119, "tests_passed": 119, "tsc_clean": true }
+    },
+    "s7": { "status": "completed" }
+  }
+}

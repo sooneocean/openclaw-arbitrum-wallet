@@ -11,6 +11,8 @@ import { estimateGasHandler } from "./tools/estimateGas.js";
 import { getTokenInfoHandler } from "./tools/getTokenInfo.js";
 import { verifySignatureHandler } from "./tools/verifySignature.js";
 import { swapTokenHandler } from "./tools/swapToken.js";
+import { getTokenPriceHandler } from "./tools/getTokenPrice.js";
+import { watchTransactionHandler } from "./tools/watchTransaction.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -26,6 +28,8 @@ export { estimateGasHandler } from "./tools/estimateGas.js";
 export { getTokenInfoHandler } from "./tools/getTokenInfo.js";
 export { verifySignatureHandler } from "./tools/verifySignature.js";
 export { swapTokenHandler } from "./tools/swapToken.js";
+export { getTokenPriceHandler } from "./tools/getTokenPrice.js";
+export { watchTransactionHandler } from "./tools/watchTransaction.js";
 
 /**
  * openclaw skill manifest.
@@ -396,6 +400,69 @@ const manifest = {
         required: ["privateKey", "tokenIn", "tokenOut", "amountIn"],
       },
       handler: swapTokenHandler,
+    },
+    {
+      name: "get_token_price",
+      description:
+        "Get the current price of a token pair from Uniswap V3 on Arbitrum One. Reads the pool's slot0 sqrtPriceX96 and calculates the human-readable price. View-only call, no gas cost. Use this before swap_token to know current market prices.",
+      parameters: {
+        type: "object",
+        properties: {
+          tokenA: {
+            type: "string",
+            description:
+              "Base token ERC20 address (0x-prefixed). Price will be expressed as: 1 tokenA = X tokenB",
+          },
+          tokenB: {
+            type: "string",
+            description: "Quote token ERC20 address (0x-prefixed)",
+          },
+          fee: {
+            type: "number",
+            description:
+              "Uniswap V3 pool fee tier: 100 (0.01%), 500 (0.05%), 3000 (0.3%), or 10000 (1%). Default: 3000",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["tokenA", "tokenB"],
+      },
+      handler: getTokenPriceHandler,
+    },
+    {
+      name: "watch_transaction",
+      description:
+        "Wait for a transaction to be confirmed on-chain and return the full receipt. Unlike other tools, this is NOT fire-and-forget — it blocks until the transaction is mined with the requested number of confirmations or the timeout is reached. Use this after send_transaction, swap_token, or any state-changing operation to verify the outcome.",
+      parameters: {
+        type: "object",
+        properties: {
+          txHash: {
+            type: "string",
+            description:
+              "Transaction hash to watch (0x-prefixed, 66 chars)",
+          },
+          confirmations: {
+            type: "number",
+            description:
+              "Number of block confirmations to wait for. Default: 1",
+          },
+          timeoutMs: {
+            type: "number",
+            description:
+              "Timeout in milliseconds. Default: 120000 (2 minutes)",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["txHash"],
+      },
+      handler: watchTransactionHandler,
     },
   ],
 };

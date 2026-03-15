@@ -413,3 +413,73 @@ export interface SwapTokenData {
 export type SwapTokenHandler = (
   params: SwapTokenParams
 ) => Promise<HandlerResult<SwapTokenData>>;
+
+// ============================================================
+// FA14: get_token_price
+// ============================================================
+
+export interface GetTokenPriceParams {
+  /** Base token ERC20 address (0x-prefixed) */
+  tokenA: string;
+  /** Quote token ERC20 address (0x-prefixed) */
+  tokenB: string;
+  /** Uniswap V3 pool fee tier: 100, 500, 3000, or 10000. Default: 3000 */
+  fee?: number;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetTokenPriceData {
+  /** Base token address */
+  tokenA: string;
+  /** Quote token address */
+  tokenB: string;
+  /** Human-readable price: how many tokenB per 1 tokenA */
+  price: string;
+  /** Pool fee tier */
+  fee: number;
+  /** Uniswap V3 pool address */
+  poolAddress: string;
+}
+
+export type GetTokenPriceHandler = (
+  params: GetTokenPriceParams
+) => Promise<HandlerResult<GetTokenPriceData>>;
+
+// ============================================================
+// FA15: watch_transaction
+// ============================================================
+
+export interface WatchTransactionParams {
+  /** Transaction hash to watch (0x-prefixed, 66 chars) */
+  txHash: string;
+  /** Number of block confirmations to wait for. Default: 1 */
+  confirmations?: number;
+  /** Timeout in milliseconds. Default: 120000 (2 minutes) */
+  timeoutMs?: number;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface WatchTransactionData {
+  /** Transaction hash */
+  txHash: string;
+  /** "success" (status 1) or "reverted" (status 0) */
+  status: "success" | "reverted";
+  /** Block number where tx was mined */
+  blockNumber: number;
+  /** Gas used */
+  gasUsed: string;
+  /** Effective gas price in Gwei */
+  effectiveGasPriceGwei: string;
+  /** Sender address */
+  from: string;
+  /** Recipient/contract address */
+  to: string;
+  /** Number of confirmations achieved */
+  confirmations: number;
+}
+
+export type WatchTransactionHandler = (
+  params: WatchTransactionParams
+) => Promise<HandlerResult<WatchTransactionData>>;
