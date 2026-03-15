@@ -2,7 +2,7 @@
 
 Arbitrum wallet management skill for [openclaw](https://github.com/sooneocean/openclaw-arbitrum-wallet) agents.
 
-Provides seven tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
+Provides eight tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
 
 ## Install
 
@@ -229,6 +229,34 @@ const result2 = await skill.tools[6].handler({
 
 ---
 
+### `approve_token`
+
+Approve a spender to transfer ERC20 tokens on your behalf. Required before DeFi interactions (DEX swaps, lending deposits).
+
+> ⚠️ **Fire-and-forget**: returns `txHash` immediately after broadcast.
+
+```typescript
+// Approve 1000 USDC for a DEX router
+const result = await skill.tools[7].handler({
+  privateKey: "0xYourPrivateKey",
+  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC
+  spender: "0xDEXRouterAddress",
+  amount: "1000", // or "unlimited" for max approval
+});
+```
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `privateKey` | ✅ | Token owner's private key (0x-prefixed hex) |
+| `tokenAddress` | ✅ | ERC20 token contract address |
+| `spender` | ✅ | Address to approve (e.g. DEX router) |
+| `amount` | ✅ | Approval amount (human-readable) or `"unlimited"` |
+| `rpcUrl` | ❌ | Custom RPC URL |
+
+---
+
 ## Error Handling
 
 All errors return `{ success: false, error: "<ErrorType>: <detail>" }`.
@@ -247,7 +275,7 @@ All errors return `{ success: false, error: "<ErrorType>: <detail>" }`.
 
 ## Security
 
-> ⚠️ **Critical**: `send_transaction`, `transfer_token`, `sign_message`, and `import_wallet` accept `privateKey` as a plain string parameter. This means **the private key appears in the tool call's JSON input**, which may be logged by your agent runtime, conversation history, or middleware.
+> ⚠️ **Critical**: `send_transaction`, `transfer_token`, `approve_token`, `sign_message`, and `import_wallet` accept `privateKey` as a plain string parameter. This means **the private key appears in the tool call's JSON input**, which may be logged by your agent runtime, conversation history, or middleware.
 
 **Your responsibility as the caller:**
 - Ensure your agent runtime does **not** log tool call inputs to persistent storage

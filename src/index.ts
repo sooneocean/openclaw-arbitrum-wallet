@@ -5,6 +5,7 @@ import { signMessageHandler } from "./tools/signMessage.js";
 import { transferTokenHandler } from "./tools/transferToken.js";
 import { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 import { importWalletHandler } from "./tools/importWallet.js";
+import { approveTokenHandler } from "./tools/approveToken.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -14,6 +15,7 @@ export { signMessageHandler } from "./tools/signMessage.js";
 export { transferTokenHandler } from "./tools/transferToken.js";
 export { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 export { importWalletHandler } from "./tools/importWallet.js";
+export { approveTokenHandler } from "./tools/approveToken.js";
 
 /**
  * openclaw skill manifest.
@@ -194,6 +196,41 @@ const manifest = {
         required: [] as string[],
       },
       handler: importWalletHandler,
+    },
+    {
+      name: "approve_token",
+      description:
+        "Approve a spender to transfer ERC20 tokens on your behalf. Required before interacting with DeFi protocols (DEX swaps, lending deposits, etc.). Use amount 'unlimited' for max approval. Returns txHash immediately (fire-and-forget).",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: {
+            type: "string",
+            description: "Token owner's private key (0x-prefixed hex)",
+          },
+          tokenAddress: {
+            type: "string",
+            description: "ERC20 token contract address (0x-prefixed)",
+          },
+          spender: {
+            type: "string",
+            description:
+              "Address to approve as spender (e.g. DEX router, lending pool)",
+          },
+          amount: {
+            type: "string",
+            description:
+              "Approval amount in human-readable format (e.g. '1000') or 'unlimited' for max uint256",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["privateKey", "tokenAddress", "spender", "amount"],
+      },
+      handler: approveTokenHandler,
     },
   ],
 };

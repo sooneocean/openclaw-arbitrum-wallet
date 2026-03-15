@@ -23,6 +23,7 @@ export const ERC20_ABI = [
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)",
   "function transfer(address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 amount) returns (bool)",
 ];
 
 // ============================================================
@@ -211,3 +212,37 @@ export interface ImportWalletData {
 export type ImportWalletHandler = (
   params: ImportWalletParams
 ) => Promise<HandlerResult<ImportWalletData>>;
+
+// ============================================================
+// FA8: approve_token
+// ============================================================
+
+export interface ApproveTokenParams {
+  /** Owner's private key (0x-prefixed hex) */
+  privateKey: string;
+  /** ERC20 token contract address (0x-prefixed) */
+  tokenAddress: string;
+  /** Spender address to approve (0x-prefixed) */
+  spender: string;
+  /** Approval amount in human-readable format (e.g. "1000"). Use "unlimited" for max uint256. */
+  amount: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface ApproveTokenData {
+  /** Transaction hash */
+  txHash: string;
+  /** Token owner address */
+  owner: string;
+  /** Approved spender address */
+  spender: string;
+  /** Token contract address */
+  tokenAddress: string;
+  /** Approved amount (human-readable) */
+  amount: string;
+}
+
+export type ApproveTokenHandler = (
+  params: ApproveTokenParams
+) => Promise<HandlerResult<ApproveTokenData>>;
