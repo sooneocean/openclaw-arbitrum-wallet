@@ -1,0 +1,28 @@
+{
+  "version": "3.0.0",
+  "feature": "get-tx-receipt",
+  "spec_mode": "quick",
+  "work_type": "new_feature",
+  "status": "completed",
+  "current_stage": "S7",
+  "execution_mode": "autopilot",
+  "spec_folder": "dev/specs/get-tx-receipt",
+  "completed_at": "2026-03-15T20:00:00Z",
+  "stages": {
+    "s0": {
+      "status": "completed",
+      "output": {
+        "work_type": "new_feature",
+        "requirement": "新增 get_transaction_receipt tool，查詢交易回執狀態"
+      }
+    },
+    "s4": {
+      "status": "completed",
+      "output": {
+        "build_status": "pass",
+        "tdd_summary": {"tests_total": 51, "tests_passing": 51, "new_tests": 5},
+        "changes": ["src/tools/getTransactionReceipt.ts", "src/types.ts", "src/index.ts", "tests/getTransactionReceipt.test.ts"]
+      }
+    }
+  }
+}

@@ -159,3 +159,33 @@ export interface TransferTokenData {
 export type TransferTokenHandler = (
   params: TransferTokenParams
 ) => Promise<HandlerResult<TransferTokenData>>;
+
+// ============================================================
+// FA6: get_transaction_receipt
+// ============================================================
+
+export interface GetTransactionReceiptParams {
+  /** Transaction hash (0x-prefixed) */
+  txHash: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetTransactionReceiptData {
+  /** Transaction hash */
+  txHash: string;
+  /** "success" (status 1), "reverted" (status 0), or "pending" (not mined yet) */
+  status: "success" | "reverted" | "pending";
+  /** Block number (null if pending) */
+  blockNumber: number | null;
+  /** Gas used (null if pending) */
+  gasUsed: string | null;
+  /** Sender address (null if pending) */
+  from: string | null;
+  /** Recipient address (null if pending) */
+  to: string | null;
+}
+
+export type GetTransactionReceiptHandler = (
+  params: GetTransactionReceiptParams
+) => Promise<HandlerResult<GetTransactionReceiptData>>;

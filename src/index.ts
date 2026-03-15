@@ -3,6 +3,7 @@ import { getBalanceHandler } from "./tools/getBalance.js";
 import { sendTransactionHandler } from "./tools/sendTransaction.js";
 import { signMessageHandler } from "./tools/signMessage.js";
 import { transferTokenHandler } from "./tools/transferToken.js";
+import { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -10,6 +11,7 @@ export { getBalanceHandler } from "./tools/getBalance.js";
 export { sendTransactionHandler } from "./tools/sendTransaction.js";
 export { signMessageHandler } from "./tools/signMessage.js";
 export { transferTokenHandler } from "./tools/transferToken.js";
+export { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 
 /**
  * openclaw skill manifest.
@@ -146,6 +148,28 @@ const manifest = {
         required: ["privateKey", "tokenAddress", "to", "amount"],
       },
       handler: transferTokenHandler,
+    },
+    {
+      name: "get_transaction_receipt",
+      description:
+        "Get the receipt of a transaction by its hash. Returns status (success/reverted/pending), block number, gas used, and addresses. Use this to check if a previously sent transaction has been confirmed on-chain.",
+      parameters: {
+        type: "object",
+        properties: {
+          txHash: {
+            type: "string",
+            description:
+              "Transaction hash to look up (0x-prefixed, 66 chars)",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["txHash"],
+      },
+      handler: getTransactionReceiptHandler,
     },
   ],
 };
