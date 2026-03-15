@@ -1,0 +1,83 @@
+{
+  "version": "3.0.0",
+  "feature": "swap-token",
+  "spec_mode": "full",
+  "work_type": "new_feature",
+  "status": "completed",
+  "current_stage": "S7",
+  "execution_mode": "autopilot",
+  "spec_folder": "dev/specs/swap-token",
+  "last_updated": "2026-03-15T13:00:00Z",
+  "last_updated_by": "claude",
+  "completed_at": "2026-03-15T13:00:00Z",
+  "stages": {
+    "s0": {
+      "status": "completed",
+      "output": {
+        "brief_spec_path": "dev/specs/swap-token/s0_brief_spec.md",
+        "work_type": "new_feature",
+        "requirement": "新增 swap_token tool，透過 Uniswap V3 SwapRouter02 在 Arbitrum One 上執行 token swap（單跳），支援 ETH↔Token 與 Token↔Token",
+        "goal": "讓 openclaw agent 具備 DeFi swap 能力",
+        "success_criteria": [
+          "swap_token 支援 ETH→Token、Token→ETH、Token→Token 三種路徑",
+          "內部自動 QuoterV2 quote + slippageBps 計算 amountOutMinimum",
+          "Jest 單元測試覆蓋三種路徑 + 錯誤路徑",
+          "npm test 全過"
+        ],
+        "functional_areas": [
+          {"id": "FA-1", "name": "swap_token handler", "independent": false},
+          {"id": "FA-2", "name": "Uniswap 常數與 ABI", "independent": true}
+        ],
+        "decomposition_strategy": "single_sop_fa_labeled"
+      }
+    },
+    "s1": {
+      "status": "completed",
+      "output": {
+        "dev_spec_path": "dev/specs/swap-token/s1_dev_spec.md",
+        "impact_scope": {
+          "backend": [
+            {"file": "src/uniswap.ts", "change": "new", "fa": "FA-2"},
+            {"file": "src/tools/swapToken.ts", "change": "new", "fa": "FA-1"},
+            {"file": "src/types.ts", "change": "modify", "fa": "FA-1"},
+            {"file": "src/index.ts", "change": "modify", "fa": "FA-1"},
+            {"file": "tests/swapToken.test.ts", "change": "new", "fa": "FA-1"}
+          ]
+        }
+      }
+    },
+    "s4": {
+      "status": "completed",
+      "output": {
+        "files_changed": [
+          "src/uniswap.ts",
+          "src/tools/swapToken.ts",
+          "src/types.ts",
+          "src/index.ts",
+          "tests/swapToken.test.ts"
+        ]
+      }
+    },
+    "s5": {
+      "status": "completed",
+      "output": {
+        "verdict": "pass",
+        "findings": [
+          "S5 review 發現 deadline 未傳入 SwapRouter02 — 修正為使用 multicall(uint256 deadline, bytes[] data) overload，三種路徑統一走 multicall"
+        ]
+      }
+    },
+    "s6": {
+      "status": "completed",
+      "output": {
+        "test_suites": 15,
+        "tests_total": 100,
+        "tests_passed": 100,
+        "tsc_clean": true
+      }
+    },
+    "s7": {
+      "status": "completed"
+    }
+  }
+}

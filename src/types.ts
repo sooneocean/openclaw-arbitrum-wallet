@@ -367,3 +367,49 @@ export interface VerifySignatureData {
 export type VerifySignatureHandler = (
   params: VerifySignatureParams
 ) => Promise<HandlerResult<VerifySignatureData>>;
+
+// ============================================================
+// FA13: swap_token
+// ============================================================
+
+export interface SwapTokenParams {
+  /** Sender's private key (0x-prefixed hex) */
+  privateKey: string;
+  /** Token to swap from: ERC20 address (0x-prefixed) or 'ETH' for native ETH */
+  tokenIn: string;
+  /** Token to swap to: ERC20 address (0x-prefixed) or 'ETH' for native ETH */
+  tokenOut: string;
+  /** Amount of tokenIn in human-readable format (e.g. '0.1') */
+  amountIn: string;
+  /** Uniswap V3 pool fee tier: 100, 500, 3000, or 10000. Default: 3000 */
+  fee?: number;
+  /** Slippage tolerance in basis points. Default: 50 (0.5%) */
+  slippageBps?: number;
+  /** Transaction deadline as unix timestamp. Default: now + 1800 (30 min) */
+  deadline?: number;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface SwapTokenData {
+  /** Transaction hash */
+  txHash: string;
+  /** Token swapped from (address or 'ETH') */
+  tokenIn: string;
+  /** Token swapped to (address or 'ETH') */
+  tokenOut: string;
+  /** Amount of tokenIn (human-readable) */
+  amountIn: string;
+  /** Expected output amount from quoter (human-readable) */
+  expectedAmountOut: string;
+  /** Minimum accepted output after slippage (human-readable) */
+  amountOutMinimum: string;
+  /** Pool fee tier used */
+  fee: number;
+  /** Swap path description */
+  path: "ETH→TOKEN" | "TOKEN→ETH" | "TOKEN→TOKEN";
+}
+
+export type SwapTokenHandler = (
+  params: SwapTokenParams
+) => Promise<HandlerResult<SwapTokenData>>;

@@ -10,6 +10,7 @@ import { getAllowanceHandler } from "./tools/getAllowance.js";
 import { estimateGasHandler } from "./tools/estimateGas.js";
 import { getTokenInfoHandler } from "./tools/getTokenInfo.js";
 import { verifySignatureHandler } from "./tools/verifySignature.js";
+import { swapTokenHandler } from "./tools/swapToken.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -24,6 +25,7 @@ export { getAllowanceHandler } from "./tools/getAllowance.js";
 export { estimateGasHandler } from "./tools/estimateGas.js";
 export { getTokenInfoHandler } from "./tools/getTokenInfo.js";
 export { verifySignatureHandler } from "./tools/verifySignature.js";
+export { swapTokenHandler } from "./tools/swapToken.js";
 
 /**
  * openclaw skill manifest.
@@ -343,6 +345,57 @@ const manifest = {
         required: ["message", "signature"],
       },
       handler: verifySignatureHandler,
+    },
+    {
+      name: "swap_token",
+      description:
+        "Swap tokens on Uniswap V3 (Arbitrum One). Supports ETH→Token, Token→ETH, and Token→Token swaps using exactInputSingle. Automatically quotes via QuoterV2 and applies slippage protection. For Token→Token or Token→ETH, the caller must approve the SwapRouter02 (0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45) first using approve_token. Returns txHash immediately (fire-and-forget).",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: {
+            type: "string",
+            description: "Sender's private key (0x-prefixed hex)",
+          },
+          tokenIn: {
+            type: "string",
+            description:
+              "Token to swap from: ERC20 contract address (0x-prefixed) or 'ETH' for native ETH",
+          },
+          tokenOut: {
+            type: "string",
+            description:
+              "Token to swap to: ERC20 contract address (0x-prefixed) or 'ETH' for native ETH",
+          },
+          amountIn: {
+            type: "string",
+            description:
+              "Amount of tokenIn in human-readable format (e.g. '0.1')",
+          },
+          fee: {
+            type: "number",
+            description:
+              "Uniswap V3 pool fee tier: 100 (0.01%), 500 (0.05%), 3000 (0.3%), or 10000 (1%). Default: 3000",
+          },
+          slippageBps: {
+            type: "number",
+            description:
+              "Slippage tolerance in basis points (e.g. 50 = 0.5%). Default: 50",
+          },
+          deadline: {
+            type: "number",
+            description:
+              "Transaction deadline as unix timestamp. Default: now + 30 minutes",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["privateKey", "tokenIn", "tokenOut", "amountIn"],
+      },
+      handler: swapTokenHandler,
     },
   ],
 };
