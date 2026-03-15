@@ -2,12 +2,14 @@ import { createWalletHandler } from "./tools/createWallet.js";
 import { getBalanceHandler } from "./tools/getBalance.js";
 import { sendTransactionHandler } from "./tools/sendTransaction.js";
 import { signMessageHandler } from "./tools/signMessage.js";
+import { transferTokenHandler } from "./tools/transferToken.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
 export { getBalanceHandler } from "./tools/getBalance.js";
 export { sendTransactionHandler } from "./tools/sendTransaction.js";
 export { signMessageHandler } from "./tools/signMessage.js";
+export { transferTokenHandler } from "./tools/transferToken.js";
 
 /**
  * openclaw skill manifest.
@@ -110,6 +112,40 @@ const manifest = {
         required: ["privateKey", "message"],
       },
       handler: signMessageHandler,
+    },
+    {
+      name: "transfer_token",
+      description:
+        "Transfer ERC20 tokens on Arbitrum One. Returns txHash immediately after broadcast — does NOT wait for on-chain confirmation. Requires the token contract address, recipient, and amount in human-readable format.",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: {
+            type: "string",
+            description: "Sender's private key (0x-prefixed hex)",
+          },
+          tokenAddress: {
+            type: "string",
+            description: "ERC20 token contract address (0x-prefixed)",
+          },
+          to: {
+            type: "string",
+            description: "Recipient address (0x-prefixed)",
+          },
+          amount: {
+            type: "string",
+            description:
+              "Amount of tokens to send in human-readable format (e.g. '100.5')",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["privateKey", "tokenAddress", "to", "amount"],
+      },
+      handler: transferTokenHandler,
     },
   ],
 };

@@ -1,0 +1,41 @@
+{
+  "version": "3.0.0",
+  "feature": "erc20-transfer",
+  "spec_mode": "quick",
+  "work_type": "new_feature",
+  "status": "completed",
+  "current_stage": "S7",
+  "completed_at": "2026-03-15T19:00:00Z",
+  "execution_mode": "autopilot",
+  "spec_folder": "dev/specs/erc20-transfer",
+  "last_updated": "2026-03-15T18:00:00Z",
+  "last_updated_by": "claude",
+  "stages": {
+    "s0": {
+      "status": "completed",
+      "agent": "requirement-analyst",
+      "started_at": "2026-03-15T18:00:00Z",
+      "completed_at": "2026-03-15T18:00:00Z",
+      "output": {
+        "work_type": "new_feature",
+        "requirement": "新增 transfer_token tool handler，支援 ERC20 代幣轉帳",
+        "pain_points": ["send_transaction 只支援原生 ETH，無法轉帳 ERC20 代幣"],
+        "goal": "openclaw agent 可透過 transfer_token 工具轉帳任意 ERC20 代幣",
+        "success_criteria": [
+          "transfer_token handler 可成功廣播 ERC20 transfer 交易",
+          "回傳 txHash（fire-and-forget，與 send_transaction 一致）",
+          "私鑰錯誤回傳 InvalidKeyError",
+          "無效 token/recipient 地址回傳 ValidationError",
+          "金額不合法回傳 ValidationError",
+          "manifest 包含 5 個 tools",
+          "npm test 全部通過"
+        ],
+        "scope_in": ["新增 src/tools/transferToken.ts", "新增 tests/transferToken.test.ts", "更新 manifest (index.ts)", "更新 types.ts"],
+        "scope_out": ["approve/transferFrom", "批次轉帳", "gas estimation 自訂", "等待 receipt"],
+        "constraints": ["fire-and-forget（不等 receipt）", "不 retry（狀態變更操作）", "使用 getProvider + classifyKeyError"],
+        "functional_areas": [{"id": "FA1", "name": "ERC20 Transfer", "description": "ERC20 代幣轉帳 handler", "independence": "high"}],
+        "decomposition_strategy": "single_sop"
+      }
+    }
+  }
+}

@@ -22,6 +22,7 @@ export const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)",
+  "function transfer(address to, uint256 amount) returns (bool)",
 ];
 
 // ============================================================
@@ -124,3 +125,37 @@ export interface SignMessageData {
 export type SignMessageHandler = (
   params: SignMessageParams
 ) => Promise<HandlerResult<SignMessageData>>;
+
+// ============================================================
+// FA5: transfer_token
+// ============================================================
+
+export interface TransferTokenParams {
+  /** Sender's private key (0x-prefixed hex) */
+  privateKey: string;
+  /** ERC20 token contract address (0x-prefixed) */
+  tokenAddress: string;
+  /** Recipient address (0x-prefixed) */
+  to: string;
+  /** Token amount in human-readable format (e.g. "100.5") */
+  amount: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface TransferTokenData {
+  /** Transaction hash */
+  txHash: string;
+  /** Sender address */
+  from: string;
+  /** Recipient address */
+  to: string;
+  /** Token contract address */
+  tokenAddress: string;
+  /** Token amount sent (human-readable) */
+  amount: string;
+}
+
+export type TransferTokenHandler = (
+  params: TransferTokenParams
+) => Promise<HandlerResult<TransferTokenData>>;
