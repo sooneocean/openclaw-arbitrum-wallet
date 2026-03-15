@@ -189,3 +189,25 @@ export interface GetTransactionReceiptData {
 export type GetTransactionReceiptHandler = (
   params: GetTransactionReceiptParams
 ) => Promise<HandlerResult<GetTransactionReceiptData>>;
+
+// ============================================================
+// FA7: import_wallet
+// ============================================================
+
+export interface ImportWalletParams {
+  /** Private key to import (0x-prefixed hex). Provide either this or mnemonic, not both. */
+  privateKey?: string;
+  /** Mnemonic phrase to import (12 or 24 words). Provide either this or privateKey, not both. */
+  mnemonic?: string;
+}
+
+export interface ImportWalletData {
+  /** 0x-prefixed 42-char hex address */
+  address: string;
+  /** 0x-prefixed 66-char hex private key */
+  privateKey: string;
+}
+
+export type ImportWalletHandler = (
+  params: ImportWalletParams
+) => Promise<HandlerResult<ImportWalletData>>;

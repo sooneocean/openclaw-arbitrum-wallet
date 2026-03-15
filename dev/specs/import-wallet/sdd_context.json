@@ -1,0 +1,10 @@
+{
+  "version": "3.0.0",
+  "feature": "import-wallet",
+  "spec_mode": "quick",
+  "work_type": "new_feature",
+  "status": "completed",
+  "current_stage": "S7",
+  "execution_mode": "autopilot",
+  "completed_at": "2026-03-15T21:00:00Z"
+}

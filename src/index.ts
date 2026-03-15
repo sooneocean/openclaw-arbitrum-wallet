@@ -4,6 +4,7 @@ import { sendTransactionHandler } from "./tools/sendTransaction.js";
 import { signMessageHandler } from "./tools/signMessage.js";
 import { transferTokenHandler } from "./tools/transferToken.js";
 import { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
+import { importWalletHandler } from "./tools/importWallet.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -12,6 +13,7 @@ export { sendTransactionHandler } from "./tools/sendTransaction.js";
 export { signMessageHandler } from "./tools/signMessage.js";
 export { transferTokenHandler } from "./tools/transferToken.js";
 export { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
+export { importWalletHandler } from "./tools/importWallet.js";
 
 /**
  * openclaw skill manifest.
@@ -170,6 +172,28 @@ const manifest = {
         required: ["txHash"],
       },
       handler: getTransactionReceiptHandler,
+    },
+    {
+      name: "import_wallet",
+      description:
+        "Import an existing Arbitrum wallet from a private key or mnemonic phrase. Returns the wallet address and private key. Provide exactly one of privateKey or mnemonic.",
+      parameters: {
+        type: "object",
+        properties: {
+          privateKey: {
+            type: "string",
+            description:
+              "Private key to import (0x-prefixed hex). Provide this OR mnemonic, not both.",
+          },
+          mnemonic: {
+            type: "string",
+            description:
+              "Mnemonic phrase to import (12 or 24 words). Provide this OR privateKey, not both.",
+          },
+        },
+        required: [] as string[],
+      },
+      handler: importWalletHandler,
     },
   ],
 };
