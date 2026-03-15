@@ -1,4 +1,4 @@
-import { classifyKeyError } from "../src/errors";
+import { classifyKeyError, isNetworkError } from "../src/errors";
 
 describe("classifyKeyError", () => {
   it("returns true for error.code === INVALID_ARGUMENT", () => {
@@ -31,5 +31,46 @@ describe("classifyKeyError", () => {
   it("returns false for non-key error", () => {
     const err = new Error("insufficient funds for gas");
     expect(classifyKeyError(err)).toBe(false);
+  });
+});
+
+describe("isNetworkError", () => {
+  it("returns true for error.code === NETWORK_ERROR", () => {
+    const err = Object.assign(new Error("some error"), {
+      code: "NETWORK_ERROR",
+    });
+    expect(isNetworkError(err)).toBe(true);
+  });
+
+  it('returns true for "network" in message', () => {
+    expect(isNetworkError(new Error("network error occurred"))).toBe(true);
+  });
+
+  it('returns true for "timeout" in message', () => {
+    expect(isNetworkError(new Error("request timeout"))).toBe(true);
+  });
+
+  it('returns true for "connection" in message', () => {
+    expect(isNetworkError(new Error("connection refused"))).toBe(true);
+  });
+
+  it('returns true for "econnrefused" in message', () => {
+    expect(isNetworkError(new Error("ECONNREFUSED 127.0.0.1:8545"))).toBe(true);
+  });
+
+  it('returns true for "econnreset" in message', () => {
+    expect(isNetworkError(new Error("ECONNRESET by peer"))).toBe(true);
+  });
+
+  it("returns false for business errors", () => {
+    expect(isNetworkError(new Error("insufficient funds"))).toBe(false);
+    expect(isNetworkError(new Error("execution reverted"))).toBe(false);
+    expect(isNetworkError(new Error("invalid private key"))).toBe(false);
+  });
+
+  it("handles non-Error objects", () => {
+    expect(isNetworkError("network failure")).toBe(true);
+    expect(isNetworkError("some string")).toBe(false);
+    expect(isNetworkError({ code: "NETWORK_ERROR" })).toBe(true);
   });
 });

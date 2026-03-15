@@ -4,6 +4,7 @@ import {
   EstimateGasData,
   HandlerResult,
 } from "../types.js";
+import { isNetworkError } from "../errors.js";
 import { getProvider, withRetry } from "../provider.js";
 
 export async function estimateGasHandler(
@@ -70,6 +71,9 @@ export async function estimateGasHandler(
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: `NetworkError: ${msg}` };
+    if (isNetworkError(err)) {
+      return { success: false, error: `NetworkError: ${msg}` };
+    }
+    return { success: false, error: `EstimateError: ${msg}` };
   }
 }
