@@ -1,7 +1,32 @@
 {
   "name": "openclaw-arbitrum-wallet",
-  "version": "1.7.0",
-  "description": "Arbitrum wallet management tools for openclaw agents",
+  "version": "1.8.0",
+  "description": "Multi-chain DeFi wallet skill for openclaw agents — 30 tools for wallets, tokens, swaps, NFTs, and liquidity",
+  "keywords": [
+    "arbitrum",
+    "ethereum",
+    "base",
+    "optimism",
+    "defi",
+    "wallet",
+    "uniswap",
+    "erc20",
+    "erc721",
+    "nft",
+    "openclaw",
+    "agent",
+    "web3",
+    "ethers"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sooneocean/openclaw-arbitrum-wallet"
+  },
+  "homepage": "https://github.com/sooneocean/openclaw-arbitrum-wallet#readme",
+  "bugs": {
+    "url": "https://github.com/sooneocean/openclaw-arbitrum-wallet/issues"
+  },
+  "author": "sooneocean",
   "main": "./dist/cjs/index.js",
   "types": "./dist/cjs/index.d.ts",
   "exports": {

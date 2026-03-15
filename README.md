@@ -1,8 +1,8 @@
 # openclaw-arbitrum-wallet
 
-Arbitrum wallet management skill for [openclaw](https://github.com/sooneocean/openclaw-arbitrum-wallet) agents.
+Multi-chain DeFi wallet skill for [openclaw](https://github.com/sooneocean/openclaw-arbitrum-wallet) agents. **30 tools** covering wallets, tokens, swaps, NFTs, liquidity, and more.
 
-Provides eleven tools for Arbitrum One: create/import wallets, query balances, send ETH, transfer ERC20 tokens, check transaction receipts, and sign messages.
+Supports **Arbitrum One**, **Ethereum**, **Base**, and **Optimism**.
 
 ## Install
 
@@ -13,344 +13,112 @@ npm install openclaw-arbitrum-wallet
 ## Usage
 
 ```typescript
+// CommonJS
 const skill = require("openclaw-arbitrum-wallet").default;
+
+// ESM
+import skill from "openclaw-arbitrum-wallet";
 
 // Register with openclaw agent runtime
 agent.registerSkill(skill);
 ```
 
-Each tool handler returns `{ success, data?, error? }` — never throws.
+Every handler returns `{ success, data?, error? }` — never throws.
 
 ---
 
-## Tools
+## Tools (30)
 
-### `create_wallet`
+### Wallet Management
 
-Create a new Arbitrum wallet (address + private key + mnemonic).
+| Tool | Description | Since |
+|------|-------------|-------|
+| `create_wallet` | Generate new wallet (address + privateKey + mnemonic) | v1.0 |
+| `import_wallet` | Import from private key or mnemonic phrase | v1.2 |
 
-```typescript
-const result = await skill.tools[0].handler({});
-if (result.success) {
-  const { address, privateKey, mnemonic } = result.data;
-  // ⚠️ Store privateKey securely — it will NOT be stored by this skill
-}
-```
+### Balance & Token Queries
 
-**Returns:**
+| Tool | Description | Since |
+|------|-------------|-------|
+| `get_balance` | Query ETH or ERC20 balance for an address | v1.0 |
+| `get_token_info` | Get ERC20 name, symbol, decimals, totalSupply | v1.3 |
+| `get_allowance` | Check ERC20 spender allowance | v1.2 |
+| `get_portfolio` | Batch query ETH + multiple ERC20 balances | v1.7 |
+| `get_token_price` | Real-time price from Uniswap V3 pool slot0 | v1.4 |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `address` | `string` | 0x-prefixed 42-char Ethereum address |
-| `privateKey` | `string` | 0x-prefixed 66-char hex private key |
-| `mnemonic` | `string` | 12-word BIP39 mnemonic phrase |
+### Transactions
 
----
+| Tool | Description | Since |
+|------|-------------|-------|
+| `send_transaction` | Send ETH (fire-and-forget) | v1.0 |
+| `transfer_token` | Transfer ERC20 tokens (fire-and-forget) | v1.1 |
+| `approve_token` | Approve ERC20 spender (fire-and-forget) | v1.2 |
+| `estimate_gas` | Estimate gas cost before sending | v1.3 |
+| `simulate_transaction` | Dry-run via eth_call — check success/revert before sending | v1.6 |
+| `watch_transaction` | Wait for tx confirmation, return full receipt | v1.4 |
+| `get_transaction_receipt` | Check tx status (success/reverted/pending) | v1.1 |
 
-### `get_balance`
+### Uniswap V3 / DeFi
 
-Query ETH or ERC20 token balance for an address.
+| Tool | Description | Since |
+|------|-------------|-------|
+| `swap_token` | Swap tokens via SwapRouter02 (ETH↔Token, Token↔Token) | v1.4 |
+| `add_liquidity` | Mint new LP position with tick range | v1.7 |
+| `remove_liquidity` | Remove all liquidity + collect tokens | v1.7 |
+| `get_pool_info` | Query pool state (price, tick, liquidity) | v1.5 |
+| `wrap_eth` | Wrap ETH → WETH | v1.5 |
+| `unwrap_eth` | Unwrap WETH → ETH | v1.5 |
 
-```typescript
-// ETH balance
-const eth = await skill.tools[1].handler({
-  address: "0xYourAddress",
-});
+### NFT (ERC721)
 
-// ERC20 balance (e.g. USDC on Arbitrum)
-const usdc = await skill.tools[1].handler({
-  address: "0xYourAddress",
-  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-});
-```
+| Tool | Description | Since |
+|------|-------------|-------|
+| `get_nft_metadata` | Query NFT owner, tokenURI, name, symbol | v1.6 |
+| `transfer_nft` | Transfer NFT via safeTransferFrom (fire-and-forget) | v1.6 |
 
-**Parameters:**
+### Signing & Verification
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `address` | ✅ | Arbitrum address to query |
-| `tokenAddress` | ❌ | ERC20 contract address. Omit for native ETH |
-| `rpcUrl` | ❌ | Custom RPC URL (see Production Usage below) |
+| Tool | Description | Since |
+|------|-------------|-------|
+| `sign_message` | EIP-191 personal sign | v1.0 |
+| `verify_signature` | Recover signer address from EIP-191 signature | v1.3 |
+| `sign_typed_data` | EIP-712 structured data signing | v1.5 |
 
-**Returns:**
+### Low-Level & Utilities
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `balance` | `string` | Human-readable balance (e.g. `"1.5"`) |
-| `symbol` | `string` | `"ETH"` or token symbol |
-| `decimals` | `number` | 18 for ETH, or token decimals |
-| `raw` | `string` | Raw wei/smallest-unit value |
-
----
-
-### `send_transaction`
-
-Send ETH from a private key-controlled account.
-
-> ⚠️ **Fire-and-forget**: returns `txHash` immediately after broadcast. Does **not** wait for on-chain confirmation. The transaction may still revert. Check the receipt separately if you need confirmation.
-
-```typescript
-const result = await skill.tools[2].handler({
-  privateKey: "0xYourPrivateKey",
-  to: "0xRecipientAddress",
-  amount: "0.01", // ETH, human-readable
-});
-if (result.success) {
-  console.log("txHash:", result.data.txHash);
-}
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `privateKey` | ✅ | Sender's private key (0x-prefixed hex) |
-| `to` | ✅ | Recipient address (0x-prefixed) |
-| `amount` | ✅ | ETH amount in human-readable format (e.g. `"0.1"`) |
-| `rpcUrl` | ❌ | Custom RPC URL |
+| Tool | Description | Since |
+|------|-------------|-------|
+| `encode_tx` | ABI-encode function call → calldata | v1.7 |
+| `decode_tx` | Decode calldata → function name + args | v1.5 |
+| `multicall_read` | Batch read-only calls via Multicall3 | v1.5 |
+| `get_block` | Query block info (number, hash, timestamp, gas) | v1.7 |
+| `get_supported_chains` | List all supported networks | v1.7 |
 
 ---
 
-### `sign_message`
+## Multi-Chain Support
 
-Sign a message using EIP-191 personal sign.
-
-```typescript
-const result = await skill.tools[3].handler({
-  privateKey: "0xYourPrivateKey",
-  message: "I agree to the terms",
-});
-if (result.success) {
-  const { signature, address } = result.data;
-  // Verify: ethers.verifyMessage("I agree to the terms", signature) === address
-}
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `privateKey` | ✅ | Private key (0x-prefixed hex) |
-| `message` | ✅ | Message text to sign |
-
----
-
-### `transfer_token`
-
-Transfer ERC20 tokens from a private key-controlled account.
-
-> ⚠️ **Fire-and-forget**: returns `txHash` immediately after broadcast. Does **not** wait for on-chain confirmation.
+All tools default to **Arbitrum One**. Pass `rpcUrl` to use other chains:
 
 ```typescript
-const result = await skill.tools[4].handler({
-  privateKey: "0xYourPrivateKey",
-  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC
-  to: "0xRecipientAddress",
-  amount: "100", // token amount, human-readable
-});
+// Ethereum mainnet
+await handler({ address: "0x...", rpcUrl: "https://eth.llamarpc.com" });
+
+// Base
+await handler({ address: "0x...", rpcUrl: "https://mainnet.base.org" });
+
+// Optimism
+await handler({ address: "0x...", rpcUrl: "https://mainnet.optimism.io" });
 ```
 
-**Parameters:**
+Use `get_supported_chains` to list all networks with their RPC URLs and Uniswap V3 availability.
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `privateKey` | ✅ | Sender's private key (0x-prefixed hex) |
-| `tokenAddress` | ✅ | ERC20 token contract address |
-| `to` | ✅ | Recipient address (0x-prefixed) |
-| `amount` | ✅ | Token amount in human-readable format (e.g. `"100.5"`) |
-| `rpcUrl` | ❌ | Custom RPC URL |
-
----
-
-### `get_transaction_receipt`
-
-Check the on-chain status of a previously sent transaction.
-
-```typescript
-const result = await skill.tools[5].handler({
-  txHash: "0xYourTxHash...",
-});
-if (result.success) {
-  // result.data.status: "success" | "reverted" | "pending"
-  console.log(result.data.status, result.data.blockNumber);
-}
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `txHash` | ✅ | Transaction hash (0x-prefixed, 66 chars) |
-| `rpcUrl` | ❌ | Custom RPC URL |
-
-**Returns:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | `string` | `"success"`, `"reverted"`, or `"pending"` |
-| `blockNumber` | `number \| null` | Block number (null if pending) |
-| `gasUsed` | `string \| null` | Gas used (null if pending) |
-| `from` | `string \| null` | Sender address |
-| `to` | `string \| null` | Recipient address |
-
----
-
-### `import_wallet`
-
-Import an existing wallet from a private key or mnemonic phrase.
-
-```typescript
-// From private key
-const result = await skill.tools[6].handler({
-  privateKey: "0xYourExistingPrivateKey",
-});
-
-// From mnemonic
-const result2 = await skill.tools[6].handler({
-  mnemonic: "abandon abandon abandon ...",
-});
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `privateKey` | ❌* | Private key (0x-prefixed hex) |
-| `mnemonic` | ❌* | Mnemonic phrase (12 or 24 words) |
-
-\* Provide exactly one of `privateKey` or `mnemonic`.
-
-**Returns:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `address` | `string` | 0x-prefixed wallet address |
-| `privateKey` | `string` | 0x-prefixed private key |
-
----
-
-### `approve_token`
-
-Approve a spender to transfer ERC20 tokens on your behalf. Required before DeFi interactions (DEX swaps, lending deposits).
-
-> ⚠️ **Fire-and-forget**: returns `txHash` immediately after broadcast.
-
-```typescript
-// Approve 1000 USDC for a DEX router
-const result = await skill.tools[7].handler({
-  privateKey: "0xYourPrivateKey",
-  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC
-  spender: "0xDEXRouterAddress",
-  amount: "1000", // or "unlimited" for max approval
-});
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `privateKey` | ✅ | Token owner's private key (0x-prefixed hex) |
-| `tokenAddress` | ✅ | ERC20 token contract address |
-| `spender` | ✅ | Address to approve (e.g. DEX router) |
-| `amount` | ✅ | Approval amount (human-readable) or `"unlimited"` |
-| `rpcUrl` | ❌ | Custom RPC URL |
-
----
-
-### `get_allowance`
-
-Query the current ERC20 token allowance for a spender. Use before DeFi interactions to check if `approve_token` is needed.
-
-```typescript
-const result = await skill.tools[8].handler({
-  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC
-  owner: "0xYourAddress",
-  spender: "0xDEXRouterAddress",
-});
-if (result.success) {
-  console.log(result.data.allowance, result.data.symbol); // e.g. "1000" "USDC"
-}
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `tokenAddress` | ✅ | ERC20 token contract address |
-| `owner` | ✅ | Token owner address |
-| `spender` | ✅ | Spender address to check |
-| `rpcUrl` | ❌ | Custom RPC URL |
-
-**Returns:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `allowance` | `string` | Human-readable allowance |
-| `symbol` | `string` | Token symbol |
-| `decimals` | `number` | Token decimals |
-| `raw` | `string` | Raw allowance value |
-
----
-
-### `estimate_gas`
-
-Estimate the gas cost for a transaction before sending it.
-
-```typescript
-const result = await skill.tools[9].handler({
-  from: "0xYourAddress",
-  to: "0xRecipientAddress",
-  value: "0.1", // optional ETH value
-});
-if (result.success) {
-  console.log(result.data.gasEstimate, "gas units");
-  console.log(result.data.gasPriceGwei, "Gwei");
-  console.log(result.data.estimatedCostEth, "ETH total cost");
-}
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `from` | ✅ | Sender address |
-| `to` | ✅ | Recipient or contract address |
-| `value` | ❌ | ETH value (human-readable) |
-| `data` | ❌ | Contract call data (hex) |
-| `rpcUrl` | ❌ | Custom RPC URL |
-
----
-
-### `get_token_info`
-
-Get basic information about an ERC20 token.
-
-```typescript
-const result = await skill.tools[10].handler({
-  tokenAddress: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-});
-if (result.success) {
-  console.log(result.data.name, result.data.symbol, result.data.decimals);
-  // "USD Coin" "USDC" 6
-}
-```
-
-**Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `tokenAddress` | ✅ | ERC20 token contract address |
-| `rpcUrl` | ❌ | Custom RPC URL |
-
-**Returns:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | `string` | Token name |
-| `symbol` | `string` | Token symbol |
-| `decimals` | `number` | Token decimals |
-| `totalSupply` | `string` | Total supply (human-readable) |
-| `totalSupplyRaw` | `string` | Raw total supply |
+| Chain | Chain ID | Uniswap V3 |
+|-------|----------|------------|
+| Arbitrum One | 42161 | Yes |
+| Ethereum | 1 | Yes |
+| Base | 8453 | Yes |
+| Optimism | 10 | Yes |
 
 ---
 
@@ -360,42 +128,36 @@ All errors return `{ success: false, error: "<ErrorType>: <detail>" }`.
 
 | Error Type | Trigger |
 |------------|---------|
-| `ValidationError` | Invalid address, amount ≤ 0, invalid txHash format |
+| `ValidationError` | Invalid address, amount, txHash format, etc. |
 | `InvalidKeyError` | Malformed private key |
-| `InsufficientFundsError` | Not enough ETH for value + gas |
-| `NetworkError` | RPC timeout or connection failure |
-| `InvalidContractError` | ERC20 address is not a valid contract |
-| `TransactionError` | Other on-chain error |
-| `UnexpectedError` | Internal or unclassified failure |
+| `InsufficientFundsError` | Not enough ETH/tokens |
+| `NetworkError` | RPC timeout or connection failure (retried automatically) |
+| `SwapError` | Uniswap swap failure (slippage, pool not found) |
+| `NftError` | NFT operation failure (not owner, token doesn't exist) |
+| `LiquidityError` | Liquidity operation failure |
+| `WatchError` | Transaction confirmation timeout |
 
 ---
 
 ## Security
 
-> ⚠️ **Critical**: `send_transaction`, `transfer_token`, `approve_token`, `sign_message`, and `import_wallet` accept `privateKey` as a plain string parameter. This means **the private key appears in the tool call's JSON input**, which may be logged by your agent runtime, conversation history, or middleware.
+> **Private keys** are accepted as plain string parameters. They exist only in handler memory during execution and are never logged, cached, or stored.
 
-**Your responsibility as the caller:**
-- Ensure your agent runtime does **not** log tool call inputs to persistent storage
-- Never hardcode private keys — use secure environment variables or vaults
-- This skill does NOT store, cache, or log private keys internally
-
-**This skill's guarantees:**
-- Private key only exists in handler memory scope during execution
-- No `console.log` of any private key or sensitive data
-- Fully stateless — no singleton, no cache, no side effects
+- Ensure your agent runtime does **not** log tool call inputs
+- Use secure environment variables or vaults for private keys
+- This skill is fully stateless
 
 ---
 
 ## Production Usage
 
-The default RPC (`https://arb1.arbitrum.io/rpc`) is a public endpoint with **no SLA** and may have rate limits. For production agents with high call volume, use a private RPC:
+Default RPCs are public endpoints with no SLA. For production:
 
 ```typescript
-// Using Alchemy
-await handler({ address: "0x...", rpcUrl: "https://arb-mainnet.g.alchemy.com/v2/YOUR_KEY" });
-
-// Using Infura
-await handler({ address: "0x...", rpcUrl: "https://arbitrum-mainnet.infura.io/v3/YOUR_KEY" });
+await handler({
+  address: "0x...",
+  rpcUrl: "https://arb-mainnet.g.alchemy.com/v2/YOUR_KEY"
+});
 ```
 
 Providers: [Alchemy](https://alchemy.com), [Infura](https://infura.io), [QuickNode](https://quicknode.com)
@@ -404,47 +166,18 @@ Providers: [Alchemy](https://alchemy.com), [Infura](https://infura.io), [QuickNo
 
 ## Publishing
 
-This package is published to npm under the `openclaw-arbitrum-wallet` name. If you are contributing and need to publish a new version, follow these steps:
+### GitHub Actions (recommended)
 
-### Manual publish
+Create a GitHub release → CI automatically runs tests, builds, and publishes to npm with provenance.
 
-1. **Authenticate with npm:**
+Requires `NPM_TOKEN` secret in GitHub repo settings.
 
-   ```bash
-   npm login
-   ```
+### Manual
 
-   This opens a browser login flow. After completing it, your credentials are stored locally.
-
-   For CI/CD or non-interactive environments, set the `NPM_TOKEN` environment variable in your shell or GitHub Secrets instead:
-
-   ```bash
-   export NPM_TOKEN=your_npm_token_here
-   ```
-
-   Then create or update `~/.npmrc`:
-
-   ```
-   //registry.npmjs.org/:_authToken=${NPM_TOKEN}
-   ```
-
-2. **Run tests manually (optional — prepublishOnly enforces this):**
-
-   ```bash
-   npm test
-   ```
-
-3. **Publish:**
-
-   ```bash
-   npm publish
-   ```
-
-   The `prepublishOnly` script will automatically run `npm run build && npm test` before publishing. The publish will abort if either step fails.
-
-### CI/CD (GitHub Actions)
-
-If you want to automate publishing on release, add a `.github/workflows/publish.yml` workflow and store your npm token as a GitHub Secret named `NPM_TOKEN`. The workflow can then run `npm publish` with the token injected via the `NODE_AUTH_TOKEN` environment variable.
+```bash
+npm login
+npm publish  # runs build + test automatically via prepublishOnly
+```
 
 ---
 

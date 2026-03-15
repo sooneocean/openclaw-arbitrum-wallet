@@ -48,6 +48,32 @@ describe("signMessageHandler", () => {
     expect(result.error).toMatch(/InvalidKeyError/);
   });
 
+  it("returns InvalidKeyError for curve.n rejection (ethers v6)", async () => {
+    const { Wallet } = require("ethers");
+    (Wallet as jest.Mock).mockImplementationOnce(() => {
+      throw new Error("Expected valid bigint: 0 < bigint < curve.n");
+    });
+    const result = await signMessageHandler({
+      privateKey: "0x" + "00".repeat(32),
+      message: "hello",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/InvalidKeyError/);
+  });
+
+  it("returns UnexpectedError for non-key Wallet construction failure", async () => {
+    const { Wallet } = require("ethers");
+    (Wallet as jest.Mock).mockImplementationOnce(() => {
+      throw new Error("some random error");
+    });
+    const result = await signMessageHandler({
+      privateKey: "0x" + "ff".repeat(32),
+      message: "hello",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/UnexpectedError/);
+  });
+
   it("returns error on unexpected sign failure", async () => {
     mockSignMessage.mockRejectedValue(new Error("sign failed unexpectedly"));
     const result = await signMessageHandler({

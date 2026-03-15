@@ -71,7 +71,7 @@ export { removeLiquidityHandler } from "./tools/removeLiquidity.js";
  */
 const manifest = {
   name: "arbitrum-wallet",
-  version: "1.7.0",
+  version: "1.8.0",
   description: "Arbitrum wallet management tools for openclaw agents",
   tools: [
     {
