@@ -1,7 +1,7 @@
 import { JsonRpcProvider } from "ethers";
 import { DEFAULT_RPC_URL } from "./types.js";
 import { isNetworkError } from "./errors.js";
-import { resolveRpcUrl } from "./chains.js";
+import { resolveRpcUrl, getFallbackRpcUrls } from "./chains.js";
 
 const cache = new Map<string, JsonRpcProvider>();
 
@@ -18,6 +18,20 @@ export function getProvider(rpcUrl?: string, chainId?: number): JsonRpcProvider 
     cache.set(url, provider);
   }
   return provider;
+}
+
+/**
+ * Get a provider with fallback support.
+ * Returns primary provider + fallback providers for retry on network failure.
+ */
+export function getProviderWithFallbacks(
+  rpcUrl?: string,
+  chainId?: number
+): JsonRpcProvider[] {
+  const primary = getProvider(rpcUrl, chainId);
+  const fallbackUrls = getFallbackRpcUrls(rpcUrl, chainId);
+  const fallbacks = fallbackUrls.map((url) => getProvider(url));
+  return [primary, ...fallbacks];
 }
 
 /**
@@ -63,5 +77,30 @@ export async function withRetry<T>(
     }
   }
   // Unreachable, but TypeScript needs it
+  throw lastError;
+}
+
+/**
+ * Execute a read-only operation with automatic RPC fallback.
+ * Tries primary provider first, then falls back to alternate RPCs on network errors.
+ */
+export async function withFallback<T>(
+  fn: (provider: JsonRpcProvider) => Promise<T>,
+  rpcUrl?: string,
+  chainId?: number
+): Promise<T> {
+  const providers = getProviderWithFallbacks(rpcUrl, chainId);
+
+  let lastError: unknown;
+  for (const provider of providers) {
+    try {
+      return await fn(provider);
+    } catch (err) {
+      lastError = err;
+      if (!isNetworkError(err)) {
+        throw err; // Business error — don't try fallback
+      }
+    }
+  }
   throw lastError;
 }

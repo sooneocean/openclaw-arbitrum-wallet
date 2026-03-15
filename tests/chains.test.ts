@@ -1,4 +1,4 @@
-import { resolveRpcUrl, getChainConfig, SUPPORTED_CHAIN_IDS } from "../src/chains";
+import { resolveRpcUrl, getFallbackRpcUrls, getChainConfig, SUPPORTED_CHAIN_IDS } from "../src/chains";
 import { getSupportedChainsHandler } from "../src/tools/getSupportedChains";
 
 describe("chain registry", () => {
@@ -34,6 +34,16 @@ describe("chain registry", () => {
 
   it("getChainConfig returns undefined for unknown chain", () => {
     expect(getChainConfig(99999)).toBeUndefined();
+  });
+
+  it("returns fallback URLs for default chain", () => {
+    const fallbacks = getFallbackRpcUrls();
+    expect(fallbacks.length).toBeGreaterThanOrEqual(2);
+    expect(fallbacks[0]).not.toContain("arb1.arbitrum.io"); // not primary
+  });
+
+  it("returns empty fallbacks for explicit rpcUrl", () => {
+    expect(getFallbackRpcUrls("https://custom.rpc")).toEqual([]);
   });
 
   it("SUPPORTED_CHAIN_IDS includes all 4 chains", () => {

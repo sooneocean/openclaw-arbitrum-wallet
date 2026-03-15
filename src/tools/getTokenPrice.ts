@@ -1,4 +1,4 @@
-import { Contract, isAddress, formatUnits } from "ethers";
+import { Contract, isAddress } from "ethers";
 import {
   GetTokenPriceParams,
   GetTokenPriceData,
@@ -101,42 +101,47 @@ export async function getTokenPriceHandler(
       withRetry(() => tokenBContract.decimals()).then(Number),
     ]);
 
-    // Calculate price from sqrtPriceX96
-    // price_token0_in_token1 = (sqrtPriceX96 / 2^96)^2 * 10^(decimals0 - decimals1)
-    // We use high-precision math to avoid floating point issues
+    // Calculate price from sqrtPriceX96 using BigInt to avoid precision loss.
+    // sqrtPriceX96 can be up to 160 bits, so sqrtPriceX96^2 can be 320 bits.
+    // JavaScript Number only has 53-bit precision — must use BigInt throughout.
+    //
+    // price_token0_in_token1 = (sqrtPriceX96^2 / 2^192) * 10^(dec0 - dec1)
+    // We scale by PRECISION_FACTOR to maintain decimal precision in BigInt division.
 
-    const Q96 = 2n ** 96n;
-    const numerator = sqrtPriceX96 * sqrtPriceX96;
-    const denominator = Q96 * Q96;
+    const Q192 = 2n ** 192n;
+    const PRECISION = 10n ** 18n; // 18 decimal places of precision
+    const sqrtPriceSq = sqrtPriceX96 * sqrtPriceX96;
 
-    // token0/token1 price with decimal adjustment
     const isTokenAToken0 =
       params.tokenA.toLowerCase() === token0Address.toLowerCase();
 
-    let price: number;
+    // price0in1 = sqrtPriceSq * 10^dec1 * PRECISION / (Q192 * 10^dec0)
+    // This gives us price with 18 decimals of precision in BigInt
+    const dec0 = isTokenAToken0 ? decimalsA : decimalsB;
+    const dec1 = isTokenAToken0 ? decimalsB : decimalsA;
+
+    let scaledPrice: bigint;
     if (isTokenAToken0) {
-      // price of tokenA in tokenB = (sqrtPrice/2^96)^2 * 10^(decA - decB)
-      price =
-        (Number(numerator) / Number(denominator)) *
-        10 ** (decimalsA - decimalsB);
+      // price of tokenA (token0) in tokenB (token1)
+      scaledPrice =
+        (sqrtPriceSq * 10n ** BigInt(dec1) * PRECISION) /
+        (Q192 * 10n ** BigInt(dec0));
     } else {
-      // tokenA is token1, so we need inverse
-      // price of token1 in token0 = 1 / ((sqrtPrice/2^96)^2 * 10^(dec0 - dec1))
-      price =
-        1 /
-        ((Number(numerator) / Number(denominator)) *
-          10 ** (decimalsB - decimalsA));
+      // price of tokenA (token1) in tokenB (token0) = inverse
+      // = Q192 * 10^dec0 * PRECISION / (sqrtPriceSq * 10^dec1)
+      scaledPrice =
+        (Q192 * 10n ** BigInt(dec0) * PRECISION) /
+        (sqrtPriceSq * 10n ** BigInt(dec1));
     }
 
-    // Format to reasonable precision
+    // Convert BigInt with 18 decimals to string
+    const intPart = scaledPrice / PRECISION;
+    const fracPart = scaledPrice % PRECISION;
+    const fracStr = fracPart.toString().padStart(18, "0");
     const priceStr =
-      price < 0.000001
-        ? price.toExponential(6)
-        : price < 1
-          ? price.toPrecision(6)
-          : price < 1000000
-            ? price.toFixed(6)
-            : price.toExponential(6);
+      intPart > 0n
+        ? `${intPart}.${fracStr.slice(0, 6)}`
+        : `0.${fracStr}`;
 
     return {
       success: true,
