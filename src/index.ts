@@ -21,6 +21,9 @@ import { signTypedDataHandler } from "./tools/signTypedData.js";
 import { simulateTransactionHandler } from "./tools/simulateTransaction.js";
 import { getNftMetadataHandler } from "./tools/getNftMetadata.js";
 import { transferNftHandler } from "./tools/transferNft.js";
+import { encodeTxHandler } from "./tools/encodeTx.js";
+import { getBlockHandler } from "./tools/getBlock.js";
+import { getPortfolioHandler } from "./tools/getPortfolio.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -46,6 +49,9 @@ export { signTypedDataHandler } from "./tools/signTypedData.js";
 export { simulateTransactionHandler } from "./tools/simulateTransaction.js";
 export { getNftMetadataHandler } from "./tools/getNftMetadata.js";
 export { transferNftHandler } from "./tools/transferNft.js";
+export { encodeTxHandler } from "./tools/encodeTx.js";
+export { getBlockHandler } from "./tools/getBlock.js";
+export { getPortfolioHandler } from "./tools/getPortfolio.js";
 
 /**
  * openclaw skill manifest.
@@ -692,6 +698,50 @@ const manifest = {
         required: ["privateKey", "contractAddress", "tokenId", "to"],
       },
       handler: transferNftHandler,
+    },
+    {
+      name: "encode_tx",
+      description:
+        "Encode a function call into ABI-encoded calldata. The inverse of decode_tx. Use this to construct calldata for simulate_transaction or send_transaction with custom contract interactions.",
+      parameters: {
+        type: "object",
+        properties: {
+          abi: { type: "array", description: 'Human-readable ABI array (e.g. ["function transfer(address to, uint256 amount)"])', items: { type: "string" } },
+          functionName: { type: "string", description: "Function name to encode" },
+          args: { type: "array", description: "Arguments to pass to the function", items: {} },
+        },
+        required: ["abi", "functionName"],
+      },
+      handler: encodeTxHandler,
+    },
+    {
+      name: "get_block",
+      description:
+        "Get information about a specific block: number, hash, timestamp, gas usage, transaction count, and miner. Defaults to latest block.",
+      parameters: {
+        type: "object",
+        properties: {
+          block: { type: "string", description: 'Block number or tag: "latest", "pending", "earliest". Default: "latest"' },
+          rpcUrl: { type: "string", description: "Optional custom RPC URL" },
+        },
+        required: [] as string[],
+      },
+      handler: getBlockHandler,
+    },
+    {
+      name: "get_portfolio",
+      description:
+        "Get ETH balance and multiple ERC20 token balances for an address in one call. Provide a list of token addresses to check. Failed token queries are silently skipped.",
+      parameters: {
+        type: "object",
+        properties: {
+          address: { type: "string", description: "Address to query (0x-prefixed)" },
+          tokenAddresses: { type: "array", description: "Optional list of ERC20 token addresses to check", items: { type: "string" } },
+          rpcUrl: { type: "string", description: "Optional custom RPC URL" },
+        },
+        required: ["address"],
+      },
+      handler: getPortfolioHandler,
     },
   ],
 };

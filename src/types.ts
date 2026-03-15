@@ -686,6 +686,73 @@ export interface TransferNftData {
   tokenId: string;
 }
 
+// ============================================================
+// FA25: encode_tx
+// ============================================================
+
+export interface EncodeTxParams {
+  /** Human-readable ABI array */
+  abi: string[];
+  /** Function name to encode */
+  functionName: string;
+  /** Arguments to pass (as strings or values) */
+  args: unknown[];
+}
+
+export interface EncodeTxData {
+  /** ABI-encoded calldata (hex) */
+  data: string;
+  /** Function signature */
+  functionSignature: string;
+}
+
+// ============================================================
+// FA26: get_block
+// ============================================================
+
+export interface GetBlockParams {
+  /** Block number, "latest", "pending", or "earliest". Default: "latest" */
+  block?: string | number;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetBlockData {
+  number: number;
+  hash: string;
+  timestamp: number;
+  gasUsed: string;
+  gasLimit: string;
+  baseFeePerGas: string | null;
+  transactionCount: number;
+  miner: string;
+}
+
+// ============================================================
+// FA27: get_portfolio
+// ============================================================
+
+export interface GetPortfolioParams {
+  /** Address to query (0x-prefixed) */
+  address: string;
+  /** Optional list of ERC20 token addresses to check */
+  tokenAddresses?: string[];
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface GetPortfolioData {
+  address: string;
+  ethBalance: string;
+  tokens: {
+    address: string;
+    symbol: string;
+    decimals: number;
+    balance: string;
+    raw: string;
+  }[];
+}
+
 /** Minimal ERC721 ABI */
 export const ERC721_ABI = [
   "function ownerOf(uint256 tokenId) view returns (address)",
