@@ -1,5 +1,6 @@
 import { JsonRpcProvider } from "ethers";
 import { DEFAULT_RPC_URL } from "./types.js";
+import { isNetworkError } from "./errors.js";
 
 const cache = new Map<string, JsonRpcProvider>();
 
@@ -30,20 +31,6 @@ export interface RetryOptions {
   isRetryable?: (err: unknown) => boolean;
 }
 
-function defaultIsRetryable(err: unknown): boolean {
-  const code = (err as { code?: string }).code;
-  const msg = err instanceof Error ? err.message : String(err);
-  const msgLower = msg.toLowerCase();
-  return (
-    code === "NETWORK_ERROR" ||
-    msgLower.includes("network") ||
-    msgLower.includes("timeout") ||
-    msgLower.includes("connection") ||
-    msgLower.includes("econnrefused") ||
-    msgLower.includes("econnreset")
-  );
-}
-
 const defaultDelay = (ms: number) =>
   new Promise<void>((r) => setTimeout(r, ms));
 
@@ -58,7 +45,7 @@ export async function withRetry<T>(
   const maxRetries = options?.maxRetries ?? 2;
   const baseDelay = options?.baseDelay ?? 200;
   const delayFn = options?.delayFn ?? defaultDelay;
-  const isRetryable = options?.isRetryable ?? defaultIsRetryable;
+  const isRetryable = options?.isRetryable ?? isNetworkError;
 
   let lastError: unknown;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
