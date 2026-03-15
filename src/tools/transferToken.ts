@@ -5,13 +5,12 @@ import {
   HandlerResult,
   ERC20_ABI,
 } from "../types.js";
-import { classifyKeyError } from "../errors.js";
-import { getProvider } from "../provider.js";
+import { classifyKeyError, isNetworkError } from "../errors.js";
+import { getProvider, withRetry } from "../provider.js";
 
 export async function transferTokenHandler(
   params: TransferTokenParams
 ): Promise<HandlerResult<TransferTokenData>> {
-  // Validate addresses
   if (!isAddress(params.to)) {
     return {
       success: false,
@@ -26,7 +25,6 @@ export async function transferTokenHandler(
     };
   }
 
-  // Construct wallet (separate try so key errors are always InvalidKeyError)
   let wallet: Wallet;
   try {
     const provider = getProvider(params.rpcUrl);
@@ -42,20 +40,13 @@ export async function transferTokenHandler(
   try {
     const contract = new Contract(params.tokenAddress, ERC20_ABI, wallet);
 
-    // Query decimals to parse human-readable amount
     let decimals: number;
     try {
-      const decimalsRaw = await contract.decimals();
+      const decimalsRaw = await withRetry(() => contract.decimals());
       decimals = Number(decimalsRaw);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      const code = (err as { code?: string }).code;
-      if (
-        code === "NETWORK_ERROR" ||
-        msg.toLowerCase().includes("network") ||
-        msg.toLowerCase().includes("timeout") ||
-        msg.toLowerCase().includes("connection")
-      ) {
+      if (isNetworkError(err)) {
         return { success: false, error: `NetworkError: ${msg}` };
       }
       return {
@@ -64,7 +55,6 @@ export async function transferTokenHandler(
       };
     }
 
-    // Parse amount
     let parsedAmount: bigint;
     try {
       parsedAmount = parseUnits(params.amount, decimals);
@@ -75,7 +65,14 @@ export async function transferTokenHandler(
       };
     }
 
-    // Execute transfer (fire-and-forget, no withRetry — state-changing operation)
+    if (parsedAmount <= 0n) {
+      return {
+        success: false,
+        error: `ValidationError: amount must be greater than 0, got "${params.amount}"`,
+      };
+    }
+
+    // Fire-and-forget, no withRetry — state-changing operation
     const tx = await contract.transfer(params.to, parsedAmount);
 
     return {
@@ -90,23 +87,17 @@ export async function transferTokenHandler(
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    const code = (err as { code?: string }).code;
 
     if (classifyKeyError(err)) {
       return { success: false, error: `InvalidKeyError: ${msg}` };
     }
     if (
-      code === "INSUFFICIENT_FUNDS" ||
+      (err as { code?: string }).code === "INSUFFICIENT_FUNDS" ||
       msg.toLowerCase().includes("insufficient funds")
     ) {
       return { success: false, error: `InsufficientFundsError: ${msg}` };
     }
-    if (
-      code === "NETWORK_ERROR" ||
-      msg.toLowerCase().includes("network") ||
-      msg.toLowerCase().includes("timeout") ||
-      msg.toLowerCase().includes("connection")
-    ) {
+    if (isNetworkError(err)) {
       return { success: false, error: `NetworkError: ${msg}` };
     }
     return { success: false, error: `TransactionError: ${msg}` };

@@ -4,6 +4,24 @@
  *
  * P0 invariant: the five conditions below must be preserved verbatim.
  */
+/**
+ * Classify whether an error is a network/connectivity error.
+ * Centralized to ensure all handlers use the same conditions.
+ */
+export function isNetworkError(err: unknown): boolean {
+  const code = (err as { code?: string }).code;
+  const msg = err instanceof Error ? err.message : String(err);
+  const msgLower = msg.toLowerCase();
+  return (
+    code === "NETWORK_ERROR" ||
+    msgLower.includes("network") ||
+    msgLower.includes("timeout") ||
+    msgLower.includes("connection") ||
+    msgLower.includes("econnrefused") ||
+    msgLower.includes("econnreset")
+  );
+}
+
 export function classifyKeyError(err: unknown): boolean {
   const code = (err as { code?: string }).code;
   const msg = err instanceof Error ? err.message : String(err);

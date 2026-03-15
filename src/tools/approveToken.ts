@@ -5,13 +5,12 @@ import {
   HandlerResult,
   ERC20_ABI,
 } from "../types.js";
-import { classifyKeyError } from "../errors.js";
-import { getProvider } from "../provider.js";
+import { classifyKeyError, isNetworkError } from "../errors.js";
+import { getProvider, withRetry } from "../provider.js";
 
 export async function approveTokenHandler(
   params: ApproveTokenParams
 ): Promise<HandlerResult<ApproveTokenData>> {
-  // Validate addresses
   if (!isAddress(params.tokenAddress)) {
     return {
       success: false,
@@ -26,7 +25,6 @@ export async function approveTokenHandler(
     };
   }
 
-  // Construct wallet
   let wallet: Wallet;
   try {
     const provider = getProvider(params.rpcUrl);
@@ -47,20 +45,13 @@ export async function approveTokenHandler(
     if (params.amount === "unlimited") {
       approvalAmount = MaxUint256;
     } else {
-      // Query decimals to parse human-readable amount
       let decimals: number;
       try {
-        const decimalsRaw = await contract.decimals();
+        const decimalsRaw = await withRetry(() => contract.decimals());
         decimals = Number(decimalsRaw);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        const code = (err as { code?: string }).code;
-        if (
-          code === "NETWORK_ERROR" ||
-          msg.toLowerCase().includes("network") ||
-          msg.toLowerCase().includes("timeout") ||
-          msg.toLowerCase().includes("connection")
-        ) {
+        if (isNetworkError(err)) {
           return { success: false, error: `NetworkError: ${msg}` };
         }
         return {
@@ -77,9 +68,16 @@ export async function approveTokenHandler(
           error: `ValidationError: Invalid amount "${params.amount}"`,
         };
       }
+
+      if (approvalAmount <= 0n) {
+        return {
+          success: false,
+          error: `ValidationError: amount must be greater than 0, got "${params.amount}"`,
+        };
+      }
     }
 
-    // Execute approve (fire-and-forget, no withRetry — state-changing operation)
+    // Fire-and-forget, no withRetry — state-changing operation
     const tx = await contract.approve(params.spender, approvalAmount);
 
     return {
@@ -94,17 +92,11 @@ export async function approveTokenHandler(
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    const code = (err as { code?: string }).code;
 
     if (classifyKeyError(err)) {
       return { success: false, error: `InvalidKeyError: ${msg}` };
     }
-    if (
-      code === "NETWORK_ERROR" ||
-      msg.toLowerCase().includes("network") ||
-      msg.toLowerCase().includes("timeout") ||
-      msg.toLowerCase().includes("connection")
-    ) {
+    if (isNetworkError(err)) {
       return { success: false, error: `NetworkError: ${msg}` };
     }
     return { success: false, error: `TransactionError: ${msg}` };

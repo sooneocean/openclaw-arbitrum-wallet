@@ -4,7 +4,7 @@ import {
   SendTransactionData,
   HandlerResult,
 } from "../types.js";
-import { classifyKeyError } from "../errors.js";
+import { classifyKeyError, isNetworkError } from "../errors.js";
 import { getProvider } from "../provider.js";
 
 export async function sendTransactionHandler(
@@ -79,12 +79,7 @@ export async function sendTransactionHandler(
     if (classifyKeyError(err)) {
       return { success: false, error: `InvalidKeyError: ${msg}` };
     }
-    if (
-      code === "NETWORK_ERROR" ||
-      msg.toLowerCase().includes("network") ||
-      msg.toLowerCase().includes("timeout") ||
-      msg.toLowerCase().includes("connection")
-    ) {
+    if (isNetworkError(err)) {
       return { success: false, error: `NetworkError: ${msg}` };
     }
     return { success: false, error: `TransactionError: ${msg}` };

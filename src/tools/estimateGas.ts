@@ -32,10 +32,23 @@ export async function estimateGasHandler(
     };
 
     if (params.value) {
-      tx.value = parseEther(params.value);
+      try {
+        tx.value = parseEther(params.value);
+      } catch {
+        return {
+          success: false,
+          error: `ValidationError: Invalid value "${params.value}"`,
+        };
+      }
     }
 
     if (params.data) {
+      if (!/^0x[0-9a-fA-F]*$/.test(params.data)) {
+        return {
+          success: false,
+          error: `ValidationError: Invalid data format "${params.data}"`,
+        };
+      }
       tx.data = params.data;
     }
 
