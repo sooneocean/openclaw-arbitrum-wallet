@@ -283,3 +283,33 @@ export interface GetAllowanceData {
 export type GetAllowanceHandler = (
   params: GetAllowanceParams
 ) => Promise<HandlerResult<GetAllowanceData>>;
+
+// ============================================================
+// FA10: estimate_gas
+// ============================================================
+
+export interface EstimateGasParams {
+  /** Sender address (0x-prefixed) */
+  from: string;
+  /** Recipient or contract address (0x-prefixed) */
+  to: string;
+  /** Optional ETH value in human-readable format (e.g. "0.1") */
+  value?: string;
+  /** Optional contract call data (hex-encoded) */
+  data?: string;
+  /** Optional custom RPC URL */
+  rpcUrl?: string;
+}
+
+export interface EstimateGasData {
+  /** Estimated gas units */
+  gasEstimate: string;
+  /** Current gas price in Gwei */
+  gasPriceGwei: string;
+  /** Estimated total cost in ETH */
+  estimatedCostEth: string;
+}
+
+export type EstimateGasHandler = (
+  params: EstimateGasParams
+) => Promise<HandlerResult<EstimateGasData>>;

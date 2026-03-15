@@ -7,6 +7,7 @@ import { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 import { importWalletHandler } from "./tools/importWallet.js";
 import { approveTokenHandler } from "./tools/approveToken.js";
 import { getAllowanceHandler } from "./tools/getAllowance.js";
+import { estimateGasHandler } from "./tools/estimateGas.js";
 
 // Re-export individual handlers for direct import/testing
 export { createWalletHandler } from "./tools/createWallet.js";
@@ -18,6 +19,7 @@ export { getTransactionReceiptHandler } from "./tools/getTransactionReceipt.js";
 export { importWalletHandler } from "./tools/importWallet.js";
 export { approveTokenHandler } from "./tools/approveToken.js";
 export { getAllowanceHandler } from "./tools/getAllowance.js";
+export { estimateGasHandler } from "./tools/estimateGas.js";
 
 /**
  * openclaw skill manifest.
@@ -262,6 +264,40 @@ const manifest = {
         required: ["tokenAddress", "owner", "spender"],
       },
       handler: getAllowanceHandler,
+    },
+    {
+      name: "estimate_gas",
+      description:
+        "Estimate the gas cost for a transaction before sending it. Returns gas units, gas price in Gwei, and estimated total cost in ETH. Useful for checking if a transaction will succeed and how much it will cost.",
+      parameters: {
+        type: "object",
+        properties: {
+          from: {
+            type: "string",
+            description: "Sender address (0x-prefixed)",
+          },
+          to: {
+            type: "string",
+            description: "Recipient or contract address (0x-prefixed)",
+          },
+          value: {
+            type: "string",
+            description:
+              "Optional ETH value in human-readable format (e.g. '0.1')",
+          },
+          data: {
+            type: "string",
+            description: "Optional contract call data (hex-encoded)",
+          },
+          rpcUrl: {
+            type: "string",
+            description:
+              "Optional custom RPC URL. Defaults to https://arb1.arbitrum.io/rpc",
+          },
+        },
+        required: ["from", "to"],
+      },
+      handler: estimateGasHandler,
     },
   ],
 };
